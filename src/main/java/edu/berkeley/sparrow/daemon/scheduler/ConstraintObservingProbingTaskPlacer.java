@@ -29,7 +29,7 @@ import edu.berkeley.sparrow.thrift.InternalService.AsyncClient;
 import edu.berkeley.sparrow.thrift.TResourceUsage;
 import edu.berkeley.sparrow.thrift.TTaskSpec;
 
-public class ConstraintObservingProbingTaskPlacer extends ProbingTaskPlacer {
+public class  ConstraintObservingProbingTaskPlacer extends ProbingTaskPlacer {
   public static int MAXIMUM_PROBE_WAIT_MS = 5; // Longest time we wait to sample
 
   public int probesPerTask;

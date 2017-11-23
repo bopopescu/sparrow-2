@@ -168,24 +168,30 @@ public class Scheduler {
     String user = "";
     if (req.getUser() != null) {
     	user = req.getUser().getUser();
+
     }
+    LOG.debug("1");
     
     String description = "";
     if (req.getDescription() != null) {
     	description = req.getDescription();
     }
+/*
     AUDIT_LOG.info(Logging.auditEventString("arrived", requestId,
                                             req.getTasks().size(),
                                             address.getAddress().getHostAddress(),
                                             address.getPort(), user, description,
-                                            isConstrained(req)));
+                                            isConstrained(req)));*/
+    LOG.debug("2");
     Collection<TaskPlacementResponse> placement = null;
+    LOG.debug("3");
     try {
       placement = getJobPlacementResp(req, requestId);
     } catch (IOException e) {
       LOG.error(e);
       return false;
     }
+    LOG.debug("4");
     long probeFinish = System.currentTimeMillis();
 
     // Launch tasks.

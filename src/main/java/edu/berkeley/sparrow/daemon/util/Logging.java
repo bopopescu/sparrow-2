@@ -14,6 +14,7 @@ public class Logging {
   public final static String AUDIT_LOGGER_NAME = "audit";
   public final static String AUDIT_LOG_FILENAME_FORMAT = "sparrow_audit.%d.%d.log";
   public final static String AUDIT_LOG_FORMAT = "%c\t%m%n";
+  public final static String CUSTOM_AUDIT_LOGGER_NAME = "custom_audit";
   
   private static Joiner paramJoiner = Joiner.on(",").useForNull("null");
   private static Joiner auditParamJoiner = Joiner.on("\t");
@@ -66,4 +67,12 @@ public class Logging {
     String name = Thread.currentThread().getStackTrace()[2].getMethodName();
     return name + ": [" + paramJoiner.join(params) + "]";
   }
+
+  @SuppressWarnings("rawtypes")
+  public static Logger getCustomAuditLogger(Class clazz) {
+    return Logger.getLogger(String.format("%s.%s", CUSTOM_AUDIT_LOGGER_NAME,
+            clazz.getName()));
+  }
+
+
 }
