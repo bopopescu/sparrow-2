@@ -153,7 +153,7 @@ public class SimpleBackend implements BackendService.Iface {
       int tasks = numTasks.addAndGet(1);
       double taskRate = ((double) tasks) * 1000 /
               (System.currentTimeMillis() - startTime);
-      //LOG.debug("Aggregate task rate: " + taskRate);
+      LOG.debug("Aggregate task rate: " + taskRate);
 
       Random r = new Random();
 

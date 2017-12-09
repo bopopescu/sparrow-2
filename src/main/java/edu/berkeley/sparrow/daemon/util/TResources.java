@@ -3,6 +3,7 @@ package edu.berkeley.sparrow.daemon.util;
 import java.net.InetSocketAddress;
 import java.util.Comparator;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import edu.berkeley.sparrow.thrift.TResourceUsage;
 import edu.berkeley.sparrow.thrift.TResourceVector;
@@ -108,6 +109,9 @@ public class TResources {
       int q2 = u2.queueLength;
       if (q1 > q2) { return 1; }
       if (q1 < q2) { return -1; }
+      if(q1 == q2) {
+        Random random = new Random();
+        return random.nextBoolean() ? 1 : -1;}
       return 0;
     }
   }

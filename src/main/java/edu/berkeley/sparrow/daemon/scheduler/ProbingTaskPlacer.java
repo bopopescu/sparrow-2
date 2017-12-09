@@ -33,7 +33,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
   private static final Logger LOG = Logger.getLogger(ProbingTaskPlacer.class);
   protected static final Logger AUDIT_LOG = Logging.getAuditLogger(ProbingTaskPlacer.class);
 
-  private static final int MAX_PROBE_WAIT_MS = 5;
+  private static final int MAX_PROBE_WAIT_MS = 500;
 
   /** See {@link SparrowConf.PROBE_MULTIPLIER} */
   private double probeRatio;
@@ -68,8 +68,11 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
     @Override
     public void onComplete(getLoad_call response) {
-      LOG.debug("Received load response from node " + socket);
-
+      try {
+        LOG.debug("Received load response from node " + socket + ": load : " + response.getResult().toString());
+      } catch (TException e1) {
+        LOG.error("Probe returned no information for " + appId);
+      }
       // TODO: Include the port, as well as the address, in the log message, so this
       // works properly when multiple daemons are running on the same machine.
       int queueLength = -1;
@@ -81,8 +84,8 @@ public class ProbingTaskPlacer implements TaskPlacer {
         LOG.error("Probe returned no information for " + appId);
       }
       AUDIT_LOG.info(Logging.auditEventString("probe_completion", requestId,
-                                              socket.getAddress().getHostAddress(),
-                                              queueLength, cores));
+              socket.getAddress().getHostAddress(),
+              queueLength, cores));
       try {
         Map<String, TResourceUsage> resp = response.getResult();
         if (!resp.containsKey(appId)) {
@@ -134,7 +137,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
     // Using a simple counter is okay for now, but eventually we will want to use
     // per-task information to decide when to return.
     int probesToLaunch = (int) Math.ceil(probeRatio * tasks.size());
-    probesToLaunch = Math.min(probesToLaunch, nodes.size());
+    probesToLaunch = 2;//Math.min(probesToLaunch, nodes.size());
     LOG.debug("Launching " + probesToLaunch + " probes");
 
     // Right now we wait for all probes to return, in the future we might add a timeout
@@ -164,7 +167,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-
+   // System.out.println("loads" + loads.toString());
     for (InetSocketAddress machine : nodeList) {
       if (!loads.containsKey(machine)) {
         // TODO maybe use stale data here?
@@ -175,7 +178,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
       }
     }
     AssignmentPolicy assigner = new ComparatorAssignmentPolicy(
-        new TResources.CPUThenQueueComparator());
+        new TResources.MinQueueComparator());
     Collection<TaskPlacementResponse> out = assigner.assignTasks(tasks, loads);
 
     return out;

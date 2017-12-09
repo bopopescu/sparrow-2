@@ -120,7 +120,10 @@ public class Scheduler {
     this.conf = conf;
     if (mode.equals("configbased")) {
       state = new ConfigSchedulerState();
-      constrainedPlacer = new ConstraintObservingProbingTaskPlacer();
+      //constrainedPlacer = new ConstraintObservingProbingTaskPlacer();
+      //constrainedPlacer = new RandomTaskPlacer();
+      constrainedPlacer = new ProbingTaskPlacer();
+      //unconstrainedPlacer = new RandomTaskPlacer();
       unconstrainedPlacer = new ProbingTaskPlacer();
     } else {
       throw new RuntimeException("Unsupported deployment mode: " + mode);
@@ -132,7 +135,7 @@ public class Scheduler {
     spreadEvenlyTaskSetSize = conf.getInt(SparrowConf.SPREAD_EVENLY_TASK_SET_SIZE,
     				SparrowConf.DEFAULT_SPREAD_EVENLY_TASK_SET_SIZE);
     
-    usePerTaskSampling = conf.getBoolean(SparrowConf.USE_PER_TASK_SAMPLING, false);
+    usePerTaskSampling = conf.getBoolean(SparrowConf.USE_PER_TASK_SAMPLING, true);
     LOG.debug("usePerTaskSampling set to " + usePerTaskSampling);
   }
 
@@ -170,8 +173,6 @@ public class Scheduler {
     	user = req.getUser().getUser();
 
     }
-    LOG.debug("1");
-    
     String description = "";
     if (req.getDescription() != null) {
     	description = req.getDescription();
@@ -182,16 +183,13 @@ public class Scheduler {
                                             address.getAddress().getHostAddress(),
                                             address.getPort(), user, description,
                                             isConstrained(req)));*/
-    LOG.debug("2");
     Collection<TaskPlacementResponse> placement = null;
-    LOG.debug("3");
     try {
       placement = getJobPlacementResp(req, requestId);
     } catch (IOException e) {
       LOG.error(e);
       return false;
     }
-    LOG.debug("4");
     long probeFinish = System.currentTimeMillis();
 
     // Launch tasks.
@@ -281,9 +279,10 @@ public class Scheduler {
   private void addRandomConstraints(TSchedulingRequest req, List<InetSocketAddress> backendList) {
     List<InetSocketAddress> nodeList = Lists.newArrayList(backendList);
     // Get a random subset of nodes by shuffling list
-    Collections.shuffle(nodeList);
-    int backendIndex = 0;
+
     for (TTaskSpec task : req.getTasks()) {
+      Collections.shuffle(nodeList);
+      int backendIndex = 0;
     	task.preference = new TPlacementPreference();
       task.preference.addToNodes(nodeList.get(backendIndex++).getHostName());
       task.preference.addToNodes(nodeList.get(backendIndex++).getHostName());
@@ -399,9 +398,12 @@ public class Scheduler {
     }
 
     if (constrained) {
+      LOG.debug("CONSTRAINED");
       return constrainedPlacer.placeTasks(app, requestId, backendList, tasks);
     } else {
+      LOG.debug("UNCONSTRAINED");
       return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks);
+
     }
   }
 

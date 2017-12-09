@@ -46,18 +46,18 @@ import java.util.concurrent.TimeUnit;
 public class SimpleFrontend implements FrontendService.Iface {
   /** Amount of time to launch tasks for. */
   public static final String EXPERIMENT_S = "experiment_s";
-  public static final int DEFAULT_EXPERIMENT_S = 60;
+  public static final int DEFAULT_EXPERIMENT_S = 150;
 
   public static final String JOB_ARRIVAL_PERIOD_MILLIS = "job_arrival_period_millis";
   public static final int DEFAULT_JOB_ARRIVAL_PERIOD_MILLIS = 100;
 
   /** Number of tasks per job. */
   public static final String TASKS_PER_JOB = "tasks_per_job";
-  public static final int DEFAULT_TASKS_PER_JOB = 2;
+  public static final int DEFAULT_TASKS_PER_JOB = 1;
 
   /** Duration of one task, in milliseconds */
   public static final String TASK_DURATION_MILLIS = "task_duration_millis";
-  public static final int DEFAULT_TASK_DURATION_MILLIS = 180;
+  public static final int DEFAULT_TASK_DURATION_MILLIS = 300;
 
   /** Host and port where scheduler is running. */
   public static final String SCHEDULER_HOST = "scheduler_host";
