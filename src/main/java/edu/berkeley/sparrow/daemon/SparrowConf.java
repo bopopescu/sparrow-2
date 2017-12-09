@@ -35,7 +35,7 @@ public class SparrowConf {
   public final static int DEFAULT_SYSTEM_MEMORY = 1024;
   
   public final static String SYSTEM_CPUS = "system.cpus";
-  public final static int DEFAULT_SYSTEM_CPUS = 4;
+  public final static int DEFAULT_SYSTEM_CPUS = 1;
   
   // Values: "production", "standalone", "configbased"
   public final static String DEPLYOMENT_MODE = "deployment.mode";
