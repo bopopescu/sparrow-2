@@ -36,7 +36,7 @@ public class InternalService {
 
     public Map<String,edu.berkeley.sparrow.thrift.TResourceUsage> getLoad(String app, String requestId) throws org.apache.thrift.TException;
 
-    public boolean launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources) throws org.apache.thrift.TException;
+    public boolean launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, String workSpeed) throws org.apache.thrift.TException;
 
   }
 
@@ -44,7 +44,7 @@ public class InternalService {
 
     public void getLoad(String app, String requestId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLoad_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.launchTask_call> resultHandler) throws org.apache.thrift.TException;
+    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, String workSpeed, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.launchTask_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -92,19 +92,20 @@ public class InternalService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getLoad failed: unknown result");
     }
 
-    public boolean launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources) throws org.apache.thrift.TException
+    public boolean launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, String workSpeed) throws org.apache.thrift.TException
     {
-      send_launchTask(message, taskId, user, estimatedResources);
+      send_launchTask(message, taskId, user, estimatedResources, workSpeed);
       return recv_launchTask();
     }
 
-    public void send_launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources) throws org.apache.thrift.TException
+    public void send_launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, String workSpeed) throws org.apache.thrift.TException
     {
       launchTask_args args = new launchTask_args();
       args.setMessage(message);
       args.setTaskId(taskId);
       args.setUser(user);
       args.setEstimatedResources(estimatedResources);
+      args.setWorkSpeed(workSpeed);
       sendBase("launchTask", args);
     }
 
@@ -171,9 +172,9 @@ public class InternalService {
       }
     }
 
-    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler) throws org.apache.thrift.TException {
+    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, String workSpeed, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      launchTask_call method_call = new launchTask_call(message, taskId, user, estimatedResources, resultHandler, this, ___protocolFactory, ___transport);
+      launchTask_call method_call = new launchTask_call(message, taskId, user, estimatedResources, workSpeed, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -183,12 +184,14 @@ public class InternalService {
       private edu.berkeley.sparrow.thrift.TFullTaskId taskId;
       private edu.berkeley.sparrow.thrift.TUserGroupInfo user;
       private edu.berkeley.sparrow.thrift.TResourceVector estimatedResources;
-      public launchTask_call(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private String workSpeed;
+      public launchTask_call(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, String workSpeed, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.message = message;
         this.taskId = taskId;
         this.user = user;
         this.estimatedResources = estimatedResources;
+        this.workSpeed = workSpeed;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -198,6 +201,7 @@ public class InternalService {
         args.setTaskId(taskId);
         args.setUser(user);
         args.setEstimatedResources(estimatedResources);
+        args.setWorkSpeed(workSpeed);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -265,7 +269,7 @@ public class InternalService {
 
       public launchTask_result getResult(I iface, launchTask_args args) throws org.apache.thrift.TException {
         launchTask_result result = new launchTask_result();
-        result.success = iface.launchTask(args.message, args.taskId, args.user, args.estimatedResources);
+        result.success = iface.launchTask(args.message, args.taskId, args.user, args.estimatedResources, args.workSpeed);
         result.setSuccessIsSet(true);
         return result;
       }
@@ -1151,6 +1155,7 @@ public class InternalService {
     private static final org.apache.thrift.protocol.TField TASK_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("taskId", org.apache.thrift.protocol.TType.STRUCT, (short)2);
     private static final org.apache.thrift.protocol.TField USER_FIELD_DESC = new org.apache.thrift.protocol.TField("user", org.apache.thrift.protocol.TType.STRUCT, (short)3);
     private static final org.apache.thrift.protocol.TField ESTIMATED_RESOURCES_FIELD_DESC = new org.apache.thrift.protocol.TField("estimatedResources", org.apache.thrift.protocol.TType.STRUCT, (short)4);
+    private static final org.apache.thrift.protocol.TField WORK_SPEED_FIELD_DESC = new org.apache.thrift.protocol.TField("workSpeed", org.apache.thrift.protocol.TType.STRING, (short)5);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1162,13 +1167,15 @@ public class InternalService {
     public edu.berkeley.sparrow.thrift.TFullTaskId taskId; // required
     public edu.berkeley.sparrow.thrift.TUserGroupInfo user; // required
     public edu.berkeley.sparrow.thrift.TResourceVector estimatedResources; // required
+    public String workSpeed; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       MESSAGE((short)1, "message"),
       TASK_ID((short)2, "taskId"),
       USER((short)3, "user"),
-      ESTIMATED_RESOURCES((short)4, "estimatedResources");
+      ESTIMATED_RESOURCES((short)4, "estimatedResources"),
+      WORK_SPEED((short)5, "workSpeed");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1191,6 +1198,8 @@ public class InternalService {
             return USER;
           case 4: // ESTIMATED_RESOURCES
             return ESTIMATED_RESOURCES;
+          case 5: // WORK_SPEED
+            return WORK_SPEED;
           default:
             return null;
         }
@@ -1242,6 +1251,8 @@ public class InternalService {
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.sparrow.thrift.TUserGroupInfo.class)));
       tmpMap.put(_Fields.ESTIMATED_RESOURCES, new org.apache.thrift.meta_data.FieldMetaData("estimatedResources", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.sparrow.thrift.TResourceVector.class)));
+      tmpMap.put(_Fields.WORK_SPEED, new org.apache.thrift.meta_data.FieldMetaData("workSpeed", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(launchTask_args.class, metaDataMap);
     }
@@ -1253,13 +1264,15 @@ public class InternalService {
       ByteBuffer message,
       edu.berkeley.sparrow.thrift.TFullTaskId taskId,
       edu.berkeley.sparrow.thrift.TUserGroupInfo user,
-      edu.berkeley.sparrow.thrift.TResourceVector estimatedResources)
+      edu.berkeley.sparrow.thrift.TResourceVector estimatedResources,
+      String workSpeed)
     {
       this();
       this.message = message;
       this.taskId = taskId;
       this.user = user;
       this.estimatedResources = estimatedResources;
+      this.workSpeed = workSpeed;
     }
 
     /**
@@ -1279,6 +1292,9 @@ public class InternalService {
       if (other.isSetEstimatedResources()) {
         this.estimatedResources = new edu.berkeley.sparrow.thrift.TResourceVector(other.estimatedResources);
       }
+      if (other.isSetWorkSpeed()) {
+        this.workSpeed = other.workSpeed;
+      }
     }
 
     public launchTask_args deepCopy() {
@@ -1290,6 +1306,7 @@ public class InternalService {
       this.taskId = null;
       this.user = null;
       this.estimatedResources = null;
+      this.workSpeed = null;
     }
 
     public byte[] getMessage() {
@@ -1398,6 +1415,30 @@ public class InternalService {
       }
     }
 
+    public String getWorkSpeed() {
+      return this.workSpeed;
+    }
+
+    public launchTask_args setWorkSpeed(String workSpeed) {
+      this.workSpeed = workSpeed;
+      return this;
+    }
+
+    public void unsetWorkSpeed() {
+      this.workSpeed = null;
+    }
+
+    /** Returns true if field workSpeed is set (has been assigned a value) and false otherwise */
+    public boolean isSetWorkSpeed() {
+      return this.workSpeed != null;
+    }
+
+    public void setWorkSpeedIsSet(boolean value) {
+      if (!value) {
+        this.workSpeed = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case MESSAGE:
@@ -1432,6 +1473,14 @@ public class InternalService {
         }
         break;
 
+      case WORK_SPEED:
+        if (value == null) {
+          unsetWorkSpeed();
+        } else {
+          setWorkSpeed((String)value);
+        }
+        break;
+
       }
     }
 
@@ -1448,6 +1497,9 @@ public class InternalService {
 
       case ESTIMATED_RESOURCES:
         return getEstimatedResources();
+
+      case WORK_SPEED:
+        return getWorkSpeed();
 
       }
       throw new IllegalStateException();
@@ -1468,6 +1520,8 @@ public class InternalService {
         return isSetUser();
       case ESTIMATED_RESOURCES:
         return isSetEstimatedResources();
+      case WORK_SPEED:
+        return isSetWorkSpeed();
       }
       throw new IllegalStateException();
     }
@@ -1518,6 +1572,15 @@ public class InternalService {
         if (!(this_present_estimatedResources && that_present_estimatedResources))
           return false;
         if (!this.estimatedResources.equals(that.estimatedResources))
+          return false;
+      }
+
+      boolean this_present_workSpeed = true && this.isSetWorkSpeed();
+      boolean that_present_workSpeed = true && that.isSetWorkSpeed();
+      if (this_present_workSpeed || that_present_workSpeed) {
+        if (!(this_present_workSpeed && that_present_workSpeed))
+          return false;
+        if (!this.workSpeed.equals(that.workSpeed))
           return false;
       }
 
@@ -1577,6 +1640,16 @@ public class InternalService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetWorkSpeed()).compareTo(typedOther.isSetWorkSpeed());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetWorkSpeed()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.workSpeed, typedOther.workSpeed);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -1626,6 +1699,14 @@ public class InternalService {
         sb.append("null");
       } else {
         sb.append(this.estimatedResources);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("workSpeed:");
+      if (this.workSpeed == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.workSpeed);
       }
       first = false;
       sb.append(")");
@@ -1715,6 +1796,14 @@ public class InternalService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 5: // WORK_SPEED
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.workSpeed = iprot.readString();
+                struct.setWorkSpeedIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -1750,6 +1839,11 @@ public class InternalService {
           struct.estimatedResources.write(oprot);
           oprot.writeFieldEnd();
         }
+        if (struct.workSpeed != null) {
+          oprot.writeFieldBegin(WORK_SPEED_FIELD_DESC);
+          oprot.writeString(struct.workSpeed);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -1780,7 +1874,10 @@ public class InternalService {
         if (struct.isSetEstimatedResources()) {
           optionals.set(3);
         }
-        oprot.writeBitSet(optionals, 4);
+        if (struct.isSetWorkSpeed()) {
+          optionals.set(4);
+        }
+        oprot.writeBitSet(optionals, 5);
         if (struct.isSetMessage()) {
           oprot.writeBinary(struct.message);
         }
@@ -1793,12 +1890,15 @@ public class InternalService {
         if (struct.isSetEstimatedResources()) {
           struct.estimatedResources.write(oprot);
         }
+        if (struct.isSetWorkSpeed()) {
+          oprot.writeString(struct.workSpeed);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, launchTask_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(4);
+        BitSet incoming = iprot.readBitSet(5);
         if (incoming.get(0)) {
           struct.message = iprot.readBinary();
           struct.setMessageIsSet(true);
@@ -1817,6 +1917,10 @@ public class InternalService {
           struct.estimatedResources = new edu.berkeley.sparrow.thrift.TResourceVector();
           struct.estimatedResources.read(iprot);
           struct.setEstimatedResourcesIsSet(true);
+        }
+        if (incoming.get(4)) {
+          struct.workSpeed = iprot.readString();
+          struct.setWorkSpeedIsSet(true);
         }
       }
     }
