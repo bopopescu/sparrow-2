@@ -34,13 +34,13 @@ public class FrontendService {
 
   public interface Iface {
 
-    public void frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message) throws org.apache.thrift.TException;
+    public void frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String workSpeed) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.frontendMessage_call> resultHandler) throws org.apache.thrift.TException;
+    public void frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String workSpeed, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.frontendMessage_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -64,18 +64,19 @@ public class FrontendService {
       super(iprot, oprot);
     }
 
-    public void frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message) throws org.apache.thrift.TException
+    public void frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String workSpeed) throws org.apache.thrift.TException
     {
-      send_frontendMessage(taskId, status, message);
+      send_frontendMessage(taskId, status, message, workSpeed);
       recv_frontendMessage();
     }
 
-    public void send_frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message) throws org.apache.thrift.TException
+    public void send_frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String workSpeed) throws org.apache.thrift.TException
     {
       frontendMessage_args args = new frontendMessage_args();
       args.setTaskId(taskId);
       args.setStatus(status);
       args.setMessage(message);
+      args.setWorkSpeed(workSpeed);
       sendBase("frontendMessage", args);
     }
 
@@ -104,9 +105,9 @@ public class FrontendService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, org.apache.thrift.async.AsyncMethodCallback<frontendMessage_call> resultHandler) throws org.apache.thrift.TException {
+    public void frontendMessage(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String workSpeed, org.apache.thrift.async.AsyncMethodCallback<frontendMessage_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      frontendMessage_call method_call = new frontendMessage_call(taskId, status, message, resultHandler, this, ___protocolFactory, ___transport);
+      frontendMessage_call method_call = new frontendMessage_call(taskId, status, message, workSpeed, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -115,11 +116,13 @@ public class FrontendService {
       private edu.berkeley.sparrow.thrift.TFullTaskId taskId;
       private int status;
       private ByteBuffer message;
-      public frontendMessage_call(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, org.apache.thrift.async.AsyncMethodCallback<frontendMessage_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private String workSpeed;
+      public frontendMessage_call(edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String workSpeed, org.apache.thrift.async.AsyncMethodCallback<frontendMessage_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.taskId = taskId;
         this.status = status;
         this.message = message;
+        this.workSpeed = workSpeed;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -128,6 +131,7 @@ public class FrontendService {
         args.setTaskId(taskId);
         args.setStatus(status);
         args.setMessage(message);
+        args.setWorkSpeed(workSpeed);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -174,7 +178,7 @@ public class FrontendService {
 
       public frontendMessage_result getResult(I iface, frontendMessage_args args) throws org.apache.thrift.TException {
         frontendMessage_result result = new frontendMessage_result();
-        iface.frontendMessage(args.taskId, args.status, args.message);
+        iface.frontendMessage(args.taskId, args.status, args.message, args.workSpeed);
         return result;
       }
     }
@@ -187,6 +191,7 @@ public class FrontendService {
     private static final org.apache.thrift.protocol.TField TASK_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("taskId", org.apache.thrift.protocol.TType.STRUCT, (short)1);
     private static final org.apache.thrift.protocol.TField STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("status", org.apache.thrift.protocol.TType.I32, (short)2);
     private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)3);
+    private static final org.apache.thrift.protocol.TField WORK_SPEED_FIELD_DESC = new org.apache.thrift.protocol.TField("workSpeed", org.apache.thrift.protocol.TType.STRING, (short)4);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -197,12 +202,14 @@ public class FrontendService {
     public edu.berkeley.sparrow.thrift.TFullTaskId taskId; // required
     public int status; // required
     public ByteBuffer message; // required
+    public String workSpeed; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       TASK_ID((short)1, "taskId"),
       STATUS((short)2, "status"),
-      MESSAGE((short)3, "message");
+      MESSAGE((short)3, "message"),
+      WORK_SPEED((short)4, "workSpeed");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -223,6 +230,8 @@ public class FrontendService {
             return STATUS;
           case 3: // MESSAGE
             return MESSAGE;
+          case 4: // WORK_SPEED
+            return WORK_SPEED;
           default:
             return null;
         }
@@ -274,6 +283,8 @@ public class FrontendService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
+      tmpMap.put(_Fields.WORK_SPEED, new org.apache.thrift.meta_data.FieldMetaData("workSpeed", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(frontendMessage_args.class, metaDataMap);
     }
@@ -284,13 +295,15 @@ public class FrontendService {
     public frontendMessage_args(
       edu.berkeley.sparrow.thrift.TFullTaskId taskId,
       int status,
-      ByteBuffer message)
+      ByteBuffer message,
+      String workSpeed)
     {
       this();
       this.taskId = taskId;
       this.status = status;
       setStatusIsSet(true);
       this.message = message;
+      this.workSpeed = workSpeed;
     }
 
     /**
@@ -306,6 +319,9 @@ public class FrontendService {
         this.message = org.apache.thrift.TBaseHelper.copyBinary(other.message);
 ;
       }
+      if (other.isSetWorkSpeed()) {
+        this.workSpeed = other.workSpeed;
+      }
     }
 
     public frontendMessage_args deepCopy() {
@@ -317,6 +333,7 @@ public class FrontendService {
       setStatusIsSet(false);
       this.status = 0;
       this.message = null;
+      this.workSpeed = null;
     }
 
     public edu.berkeley.sparrow.thrift.TFullTaskId getTaskId() {
@@ -400,6 +417,30 @@ public class FrontendService {
       }
     }
 
+    public String getWorkSpeed() {
+      return this.workSpeed;
+    }
+
+    public frontendMessage_args setWorkSpeed(String workSpeed) {
+      this.workSpeed = workSpeed;
+      return this;
+    }
+
+    public void unsetWorkSpeed() {
+      this.workSpeed = null;
+    }
+
+    /** Returns true if field workSpeed is set (has been assigned a value) and false otherwise */
+    public boolean isSetWorkSpeed() {
+      return this.workSpeed != null;
+    }
+
+    public void setWorkSpeedIsSet(boolean value) {
+      if (!value) {
+        this.workSpeed = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case TASK_ID:
@@ -426,6 +467,14 @@ public class FrontendService {
         }
         break;
 
+      case WORK_SPEED:
+        if (value == null) {
+          unsetWorkSpeed();
+        } else {
+          setWorkSpeed((String)value);
+        }
+        break;
+
       }
     }
 
@@ -439,6 +488,9 @@ public class FrontendService {
 
       case MESSAGE:
         return getMessage();
+
+      case WORK_SPEED:
+        return getWorkSpeed();
 
       }
       throw new IllegalStateException();
@@ -457,6 +509,8 @@ public class FrontendService {
         return isSetStatus();
       case MESSAGE:
         return isSetMessage();
+      case WORK_SPEED:
+        return isSetWorkSpeed();
       }
       throw new IllegalStateException();
     }
@@ -498,6 +552,15 @@ public class FrontendService {
         if (!(this_present_message && that_present_message))
           return false;
         if (!this.message.equals(that.message))
+          return false;
+      }
+
+      boolean this_present_workSpeed = true && this.isSetWorkSpeed();
+      boolean that_present_workSpeed = true && that.isSetWorkSpeed();
+      if (this_present_workSpeed || that_present_workSpeed) {
+        if (!(this_present_workSpeed && that_present_workSpeed))
+          return false;
+        if (!this.workSpeed.equals(that.workSpeed))
           return false;
       }
 
@@ -547,6 +610,16 @@ public class FrontendService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetWorkSpeed()).compareTo(typedOther.isSetWorkSpeed());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetWorkSpeed()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.workSpeed, typedOther.workSpeed);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -584,6 +657,14 @@ public class FrontendService {
         sb.append("null");
       } else {
         org.apache.thrift.TBaseHelper.toString(this.message, sb);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("workSpeed:");
+      if (this.workSpeed == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.workSpeed);
       }
       first = false;
       sb.append(")");
@@ -659,6 +740,14 @@ public class FrontendService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 4: // WORK_SPEED
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.workSpeed = iprot.readString();
+                struct.setWorkSpeedIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -685,6 +774,11 @@ public class FrontendService {
         if (struct.message != null) {
           oprot.writeFieldBegin(MESSAGE_FIELD_DESC);
           oprot.writeBinary(struct.message);
+          oprot.writeFieldEnd();
+        }
+        if (struct.workSpeed != null) {
+          oprot.writeFieldBegin(WORK_SPEED_FIELD_DESC);
+          oprot.writeString(struct.workSpeed);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -714,7 +808,10 @@ public class FrontendService {
         if (struct.isSetMessage()) {
           optionals.set(2);
         }
-        oprot.writeBitSet(optionals, 3);
+        if (struct.isSetWorkSpeed()) {
+          optionals.set(3);
+        }
+        oprot.writeBitSet(optionals, 4);
         if (struct.isSetTaskId()) {
           struct.taskId.write(oprot);
         }
@@ -724,12 +821,15 @@ public class FrontendService {
         if (struct.isSetMessage()) {
           oprot.writeBinary(struct.message);
         }
+        if (struct.isSetWorkSpeed()) {
+          oprot.writeString(struct.workSpeed);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, frontendMessage_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(3);
+        BitSet incoming = iprot.readBitSet(4);
         if (incoming.get(0)) {
           struct.taskId = new edu.berkeley.sparrow.thrift.TFullTaskId();
           struct.taskId.read(iprot);
@@ -742,6 +842,10 @@ public class FrontendService {
         if (incoming.get(2)) {
           struct.message = iprot.readBinary();
           struct.setMessageIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.workSpeed = iprot.readString();
+          struct.setWorkSpeedIsSet(true);
         }
       }
     }

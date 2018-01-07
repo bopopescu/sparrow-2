@@ -22,7 +22,7 @@ service SchedulerService {
   # status enumerations. Right now this is used only for Spark, which relies on
   # the scheduler to send task completion messages to frontends.
   void sendFrontendMessage(1: string app, 2: types.TFullTaskId taskId, 
-                           3: i32 status, 4: binary message);
+                           3: i32 status, 4: binary message, 5: string workSpeed);
 }
 
 # A service used by application backends to coordinate with Sparrow.
@@ -35,14 +35,14 @@ service NodeMonitorService {
 
   # See SchedulerService.sendFrontendMessage
   void sendFrontendMessage(1: string app, 2: types.TFullTaskId taskId,
-                           3: i32 status, 4: binary message);
+                           3: i32 status, 4: binary message, 5: string workSpeed);
 }
 
 # A service that backends are expected to extend. Handles communication
 # from a NodeMonitor.
 service BackendService {  
   void launchTask(1: binary message, 2: types.TFullTaskId taskId,
-                  3: types.TUserGroupInfo user);
+                  3: types.TUserGroupInfo user, 4: string workSpeed);
 
 }
 
@@ -51,7 +51,7 @@ service BackendService {
 service FrontendService {
   # See SchedulerService.sendFrontendMessage
   void frontendMessage(1: types.TFullTaskId taskId, 2: i32 status, 
-                       3: binary message);
+                       3: binary message, 4: string workSpeed);
 }
 
 # The InternalService exposes state about application backends to:
