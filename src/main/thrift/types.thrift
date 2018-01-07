@@ -39,6 +39,7 @@ struct TTaskSpec {
   2: TPlacementPreference preference;
   3: TResourceVector estimatedResources;
   4: optional binary message;
+  5: string workSpeed;
 }
 
 struct TSchedulingRequest {
