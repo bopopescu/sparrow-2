@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.berkeley.sparrow.prototype;
+package edu.berkeley.sparrow.examples;
 
 import edu.berkeley.sparrow.api.SparrowFrontendClient;
 import edu.berkeley.sparrow.daemon.scheduler.SchedulerThrift;

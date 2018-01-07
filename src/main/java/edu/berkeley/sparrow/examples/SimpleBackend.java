@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package edu.berkeley.sparrow.prototype;
+package edu.berkeley.sparrow.examples;
 
 import com.google.common.collect.Lists;
 import edu.berkeley.sparrow.daemon.nodemonitor.NodeMonitorThrift;
