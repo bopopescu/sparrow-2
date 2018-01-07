@@ -19,6 +19,7 @@ package edu.berkeley.sparrow.prototype;
 import edu.berkeley.sparrow.api.SparrowFrontendClient;
 import edu.berkeley.sparrow.daemon.scheduler.SchedulerThrift;
 import edu.berkeley.sparrow.daemon.util.Logging;
+import edu.berkeley.sparrow.daemon.util.MinMax;
 import edu.berkeley.sparrow.daemon.util.Serialization;
 import edu.berkeley.sparrow.thrift.FrontendService;
 import edu.berkeley.sparrow.thrift.TFullTaskId;
