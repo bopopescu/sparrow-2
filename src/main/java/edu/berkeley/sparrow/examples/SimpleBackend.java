@@ -155,7 +155,7 @@ public class SimpleBackend implements BackendService.Iface {
             //Getting rid of repeated parsing of the string
             if (globalHostWorkerSpeed == -1.0) {
                 Properties props = new Properties();
-                props.load(new StringReader(workSpeed.replace(",", "\n")));
+                props.load(new StringReader(workSpeed.replace(", ", "\n")));
                 for (Map.Entry<Object, Object> e : props.entrySet()) {
                     if ((String.valueOf(e.getKey())).equals(thisHost)) {
                         hostWorkSpeed = Double.valueOf((String)e.getValue());
@@ -170,7 +170,7 @@ public class SimpleBackend implements BackendService.Iface {
 
             Thread.sleep(sleepTime);
 
-            LOG.debug("WS: " + hostWorkSpeed + "ms" + ";  Host: "+ thisHost + "; sleepTime: " + sleepTime);
+            LOG.debug("WS: " + hostWorkSpeed + "ms" + ";  Host: "+ thisHost + "; sleepTime: " + sleepTime + "; taskDuration " + taskDuration);
 
             } catch (UnknownHostException e) {
                 e.printStackTrace();
