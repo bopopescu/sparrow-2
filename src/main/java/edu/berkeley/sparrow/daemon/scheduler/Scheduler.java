@@ -171,18 +171,20 @@ public class Scheduler {
     String user = "";
     if (req.getUser() != null) {
     	user = req.getUser().getUser();
-
+    }
+    if(user == null){
+      user  = "";
     }
     String description = "";
     if (req.getDescription() != null) {
     	description = req.getDescription();
     }
-/*
+
     AUDIT_LOG.info(Logging.auditEventString("arrived", requestId,
-                                            req.getTasks().size(),
-                                            address.getAddress().getHostAddress(),
-                                            address.getPort(), user, description,
-                                            isConstrained(req)));*/
+            req.getTasks().size(),
+            address.getAddress().getHostAddress(),
+            address.getPort(), user, description,
+            isConstrained(req)));
     Collection<TaskPlacementResponse> placement = null;
     try {
       placement = getJobPlacementResp(req, requestId);
