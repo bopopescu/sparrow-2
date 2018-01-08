@@ -146,7 +146,7 @@ public class SimpleBackend implements BackendService.Iface {
                 LOG.fatal("Error creating NM client", e);
             }
 
-            Double hostWorkSpeed = 1.0; //Initialization. The value will be replaced
+            Double hostWorkSpeed = -1.0; //Initialization. The value will be replaced
 
             String thisHost = null;
             try {
@@ -155,7 +155,7 @@ public class SimpleBackend implements BackendService.Iface {
             //Getting rid of repeated parsing of the string
             if (globalHostWorkerSpeed == -1.0) {
                 Properties props = new Properties();
-                props.load(new StringReader(workSpeed.replace(", ", "\n")));
+                props.load(new StringReader(workSpeed.replace(",", "\n")));
                 for (Map.Entry<Object, Object> e : props.entrySet()) {
                     if ((String.valueOf(e.getKey())).equals(thisHost)) {
                         hostWorkSpeed = Double.valueOf((String)e.getValue());
