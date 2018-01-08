@@ -128,7 +128,7 @@ public class SimpleBackend implements BackendService.Iface {
 
         @Override
         public void run() {
-            long taskStart = System.currentTimeMillis();
+            long startTime = System.currentTimeMillis();
             NodeMonitorService.Client client = null;
             try {
                 client = TClients.createBlockingNmClient(nodeMonitorHost, nodeMonitorPort);
@@ -142,8 +142,8 @@ public class SimpleBackend implements BackendService.Iface {
                     (System.currentTimeMillis() - startTime);
             //LOG.debug("Aggregate task rate: " + taskRate);
 
-            long startTime = System.currentTimeMillis();
-            LOG.debug("Wait Time for " + taskId.getTaskId() + " : " + (startTime - taskStartTime));
+
+//            LOG.debug("Wait Time for " + taskId.getTaskId() + " : " + (startTime - taskStartTime));
             try {
                 long sleepTime = (long)((taskDuration));
                 Thread.sleep(sleepTime);
@@ -151,7 +151,10 @@ public class SimpleBackend implements BackendService.Iface {
                 LOG.error("Interrupted while sleeping: " + e.getMessage());
             }
             //   LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
-            LOG.debug("Response Time for " + taskId.taskId +" : " +(System.currentTimeMillis() - taskStartTime));
+            LOG.debug("Actual task in " + (taskDuration) + "ms");
+            LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
+            LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
+            LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
 
 
             try {
