@@ -155,9 +155,7 @@ public class SimpleBackend implements BackendService.Iface {
             //Getting rid of repeated parsing of the string
             if (globalHostWorkerSpeed == -1.0) {
                 Properties props = new Properties();
-                //Get worker speed in hashmap.. Extracting this everytime is done because we'll have to
-                //implement learning and the workerspeed might vary with tasks
-                props.load(new StringReader(workSpeed.substring(1, workSpeed.length() - 1).replace(", ", "\n")));
+                props.load(new StringReader(workSpeed.replace(", ", "\n")));
                 for (Map.Entry<Object, Object> e : props.entrySet()) {
                     if ((String.valueOf(e.getKey())).equals(thisHost)) {
                         hostWorkSpeed = Double.valueOf((String)e.getValue());
