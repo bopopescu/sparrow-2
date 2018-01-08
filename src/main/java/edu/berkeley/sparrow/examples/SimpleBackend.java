@@ -17,6 +17,7 @@
 package edu.berkeley.sparrow.examples;
 
 import com.google.common.collect.Lists;
+import edu.berkeley.sparrow.daemon.SparrowConf;
 import edu.berkeley.sparrow.daemon.nodemonitor.NodeMonitorThrift;
 import edu.berkeley.sparrow.daemon.util.TClients;
 import edu.berkeley.sparrow.daemon.util.TServers;
@@ -36,7 +37,12 @@ import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -72,7 +78,13 @@ public class SimpleBackend implements BackendService.Iface {
     private static int nodeMonitorPort;
     private static String nodeMonitorHost= "localhost";
 
+    private static String SLAVES = "slaves";
+    private static String DEFAULT_NO_SLAVES = "slaves";
+
+    private static Double globalHostWorkerSpeed = -1.0;
+
     private static Client client;
+    private static String workSpeed;
 
     private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
     private static final ExecutorService executor =
@@ -116,14 +128,12 @@ public class SimpleBackend implements BackendService.Iface {
     private class TaskRunnable implements Runnable {
         private double taskDuration;
         private TFullTaskId taskId;
-        private String workSpeed;
         private long taskStartTime;
 
         public TaskRunnable(String requestId, TFullTaskId taskId, ByteBuffer message) {
             this.taskStartTime= message.getLong();
             this.taskDuration=message.getDouble();
             this.taskId = taskId;
-            this.workSpeed = workSpeed;
         }
 
         @Override
@@ -136,26 +146,53 @@ public class SimpleBackend implements BackendService.Iface {
                 LOG.fatal("Error creating NM client", e);
             }
 
+            Double hostWorkSpeed = 1.0; //Initialization. The value will be replaced
 
+            String thisHost = null;
+            try {
+                thisHost = Inet4Address.getLocalHost().getHostAddress();
+
+            //Getting rid of repeated parsing of the string
+            if (globalHostWorkerSpeed == -1.0) {
+                Properties props = new Properties();
+                //Get worker speed in hashmap.. Extracting this everytime is done because we'll have to
+                //implement learning and the workerspeed might vary with tasks
+                props.load(new StringReader(workSpeed.substring(1, workSpeed.length() - 1).replace(", ", "\n")));
+                for (Map.Entry<Object, Object> e : props.entrySet()) {
+                    if ((String.valueOf(e.getKey())).equals(thisHost)) {
+                        hostWorkSpeed = Double.valueOf((String)e.getValue());
+                    }
+                }
+                globalHostWorkerSpeed = hostWorkSpeed;
+            } else{
+                hostWorkSpeed = globalHostWorkerSpeed;
+            }
+
+            long sleepTime = (long)((Double.valueOf(taskDuration)/Double.valueOf(hostWorkSpeed)));
+
+            Thread.sleep(sleepTime);
+
+            LOG.debug("WS: " + hostWorkSpeed + "ms" + ";  Host: "+ thisHost + "; sleepTime: " + sleepTime);
+
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             int tasks = numTasks.addAndGet(1);
             double taskRate = ((double) tasks) * 1000 /
                     (System.currentTimeMillis() - startTime);
-            //LOG.debug("Aggregate task rate: " + taskRate);
 
+//          LOG.debug("Aggregate task rate: " + taskRate);
+//          LOG.debug("Wait Time for " + taskId.getTaskId() + " : " + (startTime - taskStartTime));
+//          LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
 
-//            LOG.debug("Wait Time for " + taskId.getTaskId() + " : " + (startTime - taskStartTime));
-            try {
-                long sleepTime = (long)((taskDuration));
-                Thread.sleep(sleepTime);
-            } catch (InterruptedException e) {
-                LOG.error("Interrupted while sleeping: " + e.getMessage());
-            }
-            //   LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
             LOG.debug("Actual task in " + (taskDuration) + "ms");
             LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
             LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
             LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
-
 
             try {
                 client.tasksFinished(Lists.newArrayList(taskId));
@@ -205,6 +242,8 @@ public class SimpleBackend implements BackendService.Iface {
         OptionParser parser = new OptionParser();
         parser.accepts("c", "configuration file").
                 withRequiredArg().ofType(String.class);
+        parser.accepts("w", "configuration file").
+                withRequiredArg().ofType(String.class);
         parser.accepts("help", "print help statement");
         OptionSet options = parser.parse(args);
 
@@ -220,12 +259,22 @@ public class SimpleBackend implements BackendService.Iface {
 
         Configuration conf = new PropertiesConfiguration();
 
+
         if (options.has("c")) {
             String configFile = (String) options.valueOf("c");
             try {
                 conf = new PropertiesConfiguration(configFile);
             } catch (ConfigurationException e) {}
         }
+
+        Configuration slavesConfig = new PropertiesConfiguration();
+        if (options.has("w")) {
+            String configFile = (String) options.valueOf("w");
+            try {
+                slavesConfig = new PropertiesConfiguration(configFile);
+            } catch (ConfigurationException e) {}
+        }
+        workSpeed = slavesConfig.getString(SLAVES, DEFAULT_NO_SLAVES);
 
         // Start backend server
         BackendService.Processor<BackendService.Iface> processor =
