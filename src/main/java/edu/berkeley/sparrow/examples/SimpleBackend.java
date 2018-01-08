@@ -51,218 +51,198 @@ import org.apache.thrift.transport.TTransportException;
  */
 public class SimpleBackend implements BackendService.Iface {
 
-  private static final String LISTEN_PORT = "listen_port";
-  private static final int DEFAULT_LISTEN_PORT = 20101;
+    private static final String LISTEN_PORT = "listen_port";
+    private static final int DEFAULT_LISTEN_PORT = 20101;
 
-  public static AtomicInteger numTasks = new AtomicInteger(0);
-  public static long startTime = -1;
+    public static AtomicInteger numTasks = new AtomicInteger(0);
+    public static long startTime = -1;
 
-  /**
-   * Each task is launched in its own thread from a thread pool with WORKER_THREADS threads,
-   * so this should be set equal to the maximum number of tasks that can be running on a worker.
-   */
-  private static final int THRIFT_WORKER_THREADS = 1;
-  private static final int WORKER_THREADS = 1;
-  private static final String APP_ID = "sleepApp";
+    /**
+     * Each task is launched in its own thread from a thread pool with WORKER_THREADS threads,
+     * so this should be set equal to the maximum number of tasks that can be running on a worker.
+     */
+    private static final int THRIFT_WORKER_THREADS = 1;
+    private static final int WORKER_THREADS = 1;
+    private static final String APP_ID = "sleepApp";
 
-  /** Configuration parameters to specify where the node monitor is running. */
-  private static final String NODE_MONITOR_HOST = "node_monitor_host";
-  private static final String DEFAULT_NODE_MONITOR_HOST = "localhost";
-  private static String NODE_MONITOR_PORT = "node_monitor_port";
-  private static int nodeMonitorPort;
-  private static String nodeMonitorHost= "localhost";
+    /** Configuration parameters to specify where the node monitor is running. */
+    private static final String NODE_MONITOR_HOST = "node_monitor_host";
+    private static final String DEFAULT_NODE_MONITOR_HOST = "localhost";
+    private static String NODE_MONITOR_PORT = "node_monitor_port";
+    private static int nodeMonitorPort;
+    private static String nodeMonitorHost= "localhost";
 
-  private static Client client;
+    private static Client client;
 
-  private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
-  private static final ExecutorService executor =
-      Executors.newFixedThreadPool(WORKER_THREADS);
+    private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
+    private static final ExecutorService executor =
+            Executors.newFixedThreadPool(WORKER_THREADS);
 
-  /**
-   * Keeps track of finished tasks.
-   *
-   * A single thread pulls items off of this queue and uses
-   * the client to notify the node monitor that tasks have finished.
-   */
-  private final BlockingQueue<TFullTaskId> finishedTasks = new LinkedBlockingQueue<TFullTaskId>();
+    /**
+     * Keeps track of finished tasks.
+     *
+     * A single thread pulls items off of this queue and uses
+     * the client to notify the node monitor that tasks have finished.
+     */
+    private final BlockingQueue<TFullTaskId> finishedTasks = new LinkedBlockingQueue<TFullTaskId>();
 
-  /**
-   * Thread that sends taskFinished() RPCs to the node monitor.
-   *
-   * We do this in a single thread so that we just need a single client to the node monitor
-   * and don't need to create a new client for each task.
-   */
-  private class TasksFinishedRpcRunnable implements Runnable {
-	  @Override
-	  public void run() {
-		  while (true) {
-		  	try {
-		  		TFullTaskId task = finishedTasks.take();
-					client.tasksFinished(Lists.newArrayList(task));
-				} catch (InterruptedException e) {
-					LOG.error("Error taking a task from the queue: " + e.getMessage());
-				} catch (TException e) {
-					LOG.error("Error with tasksFinished() RPC:" + e.getMessage());
-				}
-		  }
-	  }
-  }
+    /**
+     * Thread that sends taskFinished() RPCs to the node monitor.
+     *
+     * We do this in a single thread so that we just need a single client to the node monitor
+     * and don't need to create a new client for each task.
+     */
+    private class TasksFinishedRpcRunnable implements Runnable {
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    TFullTaskId task = finishedTasks.take();
+                    client.tasksFinished(Lists.newArrayList(task));
+                } catch (InterruptedException e) {
+                    LOG.error("Error taking a task from the queue: " + e.getMessage());
+                } catch (TException e) {
+                    LOG.error("Error with tasksFinished() RPC:" + e.getMessage());
+                }
+            }
+        }
+    }
 
-  /**
-   * Thread spawned for each task. It runs for a given amount of time (and adds
-   * its resources to the total resources for that time) then stops. It updates
-   * the NodeMonitor when it launches and again when it finishes.
-   */
-  private class TaskRunnable implements Runnable {
-    private int taskDurationMillis;
-    private TFullTaskId taskId;
-    private long taskStartTime;
+    /**
+     * Thread spawned for each task. It runs for a given amount of time (and adds
+     * its resources to the total resources for that time) then stops. It updates
+     * the NodeMonitor when it launches and again when it finishes.
+     */
+    private class TaskRunnable implements Runnable {
+        private double taskDuration;
+        private TFullTaskId taskId;
+        private String workSpeed;
+        private long taskStartTime;
 
-    public TaskRunnable(String requestId, TFullTaskId taskId, ByteBuffer message) {
-      this.taskDurationMillis = message.getInt();
-      this.taskStartTime = message.getLong();
-      this.taskId = taskId;
+        public TaskRunnable(String requestId, TFullTaskId taskId, ByteBuffer message) {
+            this.taskStartTime= message.getLong();
+            this.taskDuration=message.getDouble();
+            this.taskId = taskId;
+            this.workSpeed = workSpeed;
+        }
+
+        @Override
+        public void run() {
+            long taskStart = System.currentTimeMillis();
+            NodeMonitorService.Client client = null;
+            try {
+                client = TClients.createBlockingNmClient(nodeMonitorHost, nodeMonitorPort);
+            } catch (IOException e) {
+                LOG.fatal("Error creating NM client", e);
+            }
+
+
+            int tasks = numTasks.addAndGet(1);
+            double taskRate = ((double) tasks) * 1000 /
+                    (System.currentTimeMillis() - startTime);
+            //LOG.debug("Aggregate task rate: " + taskRate);
+
+            long startTime = System.currentTimeMillis();
+            LOG.debug("Wait Time for " + taskId.getTaskId() + " : " + (startTime - taskStartTime));
+            try {
+                long sleepTime = (long)((taskDuration));
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                LOG.error("Interrupted while sleeping: " + e.getMessage());
+            }
+            //   LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
+            LOG.debug("Response Time for " + taskId.taskId +" : " +(System.currentTimeMillis() - taskStartTime));
+
+
+            try {
+                client.tasksFinished(Lists.newArrayList(taskId));
+            } catch (TException e) {
+                e.printStackTrace();
+            }
+            client.getInputProtocol().getTransport().close();
+            client.getOutputProtocol().getTransport().close();
+            //LOG.debug("Task running for " + (System.currentTimeMillis() - taskStart) + " ms");
+
+        }
+    }
+
+    /**
+     * Initializes the backend by registering with the node monitor.
+     *
+     * Also starts a thread that handles finished tasks (by sending an RPC to the node monitor).
+     */
+    public void initialize(int listenPort, String nodeMonitorHost, int nodeMonitorPort) {
+        // Register server.
+        try {
+            client = TClients.createBlockingNmClient(nodeMonitorHost, nodeMonitorPort);
+        } catch (IOException e) {
+            LOG.debug("Error creating Thrift client: " + e.getMessage());
+        }
+
+        try {
+            client.registerBackend(APP_ID, "localhost:" + listenPort);
+            LOG.debug("Client successfully registered");
+        } catch (TException e) {
+            LOG.debug("Error while registering backend: " + e.getMessage());
+        }
+
+        new Thread(new TasksFinishedRpcRunnable()).start();
     }
 
     @Override
-    public void run() {
-//      long startTime = System.currentTimeMillis();
-//      LOG.debug("Wait Time for "+ taskId.getTaskId() +" : " + (startTime - taskStartTime));
-//      try {
-//        Thread.sleep(taskDurationMillis);
-//      } catch (InterruptedException e) {
-//        LOG.error("Interrupted while sleeping: " + e.getMessage());
-//      }
-//   //   LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
-//      LOG.debug("Response Time for " + taskId.taskId +" : " +(System.currentTimeMillis() - taskStartTime));
-//      finishedTasks.add(taskId);
-//
+    public void launchTask(ByteBuffer message, TFullTaskId taskId,
+                           TUserGroupInfo user) throws TException {
+        //LOG.info("Submitting task " + taskId.getTaskId() + " at " + System.currentTimeMillis());
 
+        executor.submit(new TaskRunnable(
+                taskId.requestId, taskId, message));
+    }
 
-      //nodeMonitorPort = conf.getInt(NODE_MONITOR_PORT, NodeMonitorThrift.DEFAULT_NM_THRIFT_PORT);
-      //nodeMonitorHost = conf.getString(NODE_MONITOR_HOST, DEFAULT_NODE_MONITOR_HOST);
-      long taskStart = System.currentTimeMillis();
-      NodeMonitorService.Client client = null;
-      try {
+    public static void main(String[] args) throws IOException, TException {
+        OptionParser parser = new OptionParser();
+        parser.accepts("c", "configuration file").
+                withRequiredArg().ofType(String.class);
+        parser.accepts("help", "print help statement");
+        OptionSet options = parser.parse(args);
+
+        if (options.has("help")) {
+            parser.printHelpOn(System.out);
+            System.exit(-1);
+        }
+
+        // Logger configuration: log to the console
+        BasicConfigurator.configure();
+        LOG.setLevel(Level.DEBUG);
+        LOG.debug("debug logging on");
+
+        Configuration conf = new PropertiesConfiguration();
+
+        if (options.has("c")) {
+            String configFile = (String) options.valueOf("c");
+            try {
+                conf = new PropertiesConfiguration(configFile);
+            } catch (ConfigurationException e) {}
+        }
+
+        // Start backend server
+        BackendService.Processor<BackendService.Iface> processor =
+                new BackendService.Processor<BackendService.Iface>(new SimpleBackend());
+
+        int listenPort = conf.getInt(LISTEN_PORT, DEFAULT_LISTEN_PORT);
+        TServers.launchThreadedThriftServer(listenPort, THRIFT_WORKER_THREADS, processor);
+
+        nodeMonitorPort = conf.getInt(NODE_MONITOR_PORT, NodeMonitorThrift.DEFAULT_NM_THRIFT_PORT);
+        nodeMonitorHost = conf.getString(NODE_MONITOR_HOST, DEFAULT_NODE_MONITOR_HOST);
+
+        // Register server
         client = TClients.createBlockingNmClient(nodeMonitorHost, nodeMonitorPort);
-      } catch (IOException e) {
-        LOG.fatal("Error creating NM client", e);
-      }
 
-
-      int tasks = numTasks.addAndGet(1);
-      double taskRate = ((double) tasks) * 1000 /
-              (System.currentTimeMillis() - startTime);
-      LOG.debug("Aggregate task rate: " + taskRate);
-
-      Random r = new Random();
-
-      long startTime = System.currentTimeMillis();
-      LOG.debug("Wait Time for " + taskId.getTaskId() + " : " + (startTime - taskStartTime));
-      try {
-        Thread.sleep(taskDurationMillis);
-      } catch (InterruptedException e) {
-        LOG.error("Interrupted while sleeping: " + e.getMessage());
-      }
-      //   LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
-   //   LOG.debug("Response Time for " + taskId.taskId +" : " +(System.currentTimeMillis() - taskStartTime));
-
-
-      try {
-        client.tasksFinished(Lists.newArrayList(taskId));
-      } catch (TException e) {
-        e.printStackTrace();
-      }
-      client.getInputProtocol().getTransport().close();
-      client.getOutputProtocol().getTransport().close();
-      //LOG.debug("Task running for " + (System.currentTimeMillis() - taskStart) + " ms");
-
-
-
-
-
-
-
-    }
-  }
-
-  /**
-   * Initializes the backend by registering with the node monitor.
-   *
-   * Also starts a thread that handles finished tasks (by sending an RPC to the node monitor).
-   */
-  public void initialize(int listenPort, String nodeMonitorHost, int nodeMonitorPort) {
-    // Register server.
-    try {
-			client = TClients.createBlockingNmClient(nodeMonitorHost, nodeMonitorPort);
-		} catch (IOException e) {
-			LOG.debug("Error creating Thrift client: " + e.getMessage());
-		}
-
-    try {
-      client.registerBackend(APP_ID, "localhost:" + listenPort);
-      LOG.debug("Client successfully registered");
-    } catch (TException e) {
-      LOG.debug("Error while registering backend: " + e.getMessage());
-    }
-
-    new Thread(new TasksFinishedRpcRunnable()).start();
-  }
-
-  @Override
-  public void launchTask(ByteBuffer message, TFullTaskId taskId,
-      TUserGroupInfo user) throws TException {
-    //LOG.info("Submitting task " + taskId.getTaskId() + " at " + System.currentTimeMillis());
-
-    executor.submit(new TaskRunnable(
-        taskId.requestId, taskId, message));
-  }
-
-  public static void main(String[] args) throws IOException, TException {
-    OptionParser parser = new OptionParser();
-    parser.accepts("c", "configuration file").
-      withRequiredArg().ofType(String.class);
-    parser.accepts("help", "print help statement");
-    OptionSet options = parser.parse(args);
-
-    if (options.has("help")) {
-      parser.printHelpOn(System.out);
-      System.exit(-1);
-    }
-
-    // Logger configuration: log to the console
-    BasicConfigurator.configure();
-    LOG.setLevel(Level.DEBUG);
-    LOG.debug("debug logging on");
-
-    Configuration conf = new PropertiesConfiguration();
-
-    if (options.has("c")) {
-      String configFile = (String) options.valueOf("c");
-      try {
-        conf = new PropertiesConfiguration(configFile);
-      } catch (ConfigurationException e) {}
-    }
-
-    // Start backend server
-    BackendService.Processor<BackendService.Iface> processor =
-            new BackendService.Processor<BackendService.Iface>(new SimpleBackend());
-
-    int listenPort = conf.getInt(LISTEN_PORT, DEFAULT_LISTEN_PORT);
-    TServers.launchThreadedThriftServer(listenPort, THRIFT_WORKER_THREADS, processor);
-
-    nodeMonitorPort = conf.getInt(NODE_MONITOR_PORT, NodeMonitorThrift.DEFAULT_NM_THRIFT_PORT);
-    nodeMonitorHost = conf.getString(NODE_MONITOR_HOST, DEFAULT_NODE_MONITOR_HOST);
-
-    // Register server
-    client = TClients.createBlockingNmClient(nodeMonitorHost, nodeMonitorPort);
-
-    try {
-      client.registerBackend(APP_ID, "localhost:" + listenPort);
-      LOG.debug("Client successfullly registered");
-    } catch (TTransportException e) {
-      LOG.debug("Error while registering backend: " + e.getMessage());
-    }
+        try {
+            client.registerBackend(APP_ID, "localhost:" + listenPort);
+            LOG.debug("Client successfullly registered");
+        } catch (TTransportException e) {
+            LOG.debug("Error while registering backend: " + e.getMessage());
+        }
 
 
 /*
@@ -280,5 +260,5 @@ public class SimpleBackend implements BackendService.Iface {
     protoBackend.initialize(listenPort, nodeMonitorHost, nodeMonitorPort);
 
 */
-  }
+    }
 }
