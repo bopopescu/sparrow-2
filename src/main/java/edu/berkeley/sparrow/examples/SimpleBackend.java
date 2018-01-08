@@ -272,7 +272,15 @@ public class SimpleBackend implements BackendService.Iface {
                 slavesConfig = new PropertiesConfiguration(configFile);
             } catch (ConfigurationException e) {}
         }
-        workSpeed = slavesConfig.getString(SLAVES, DEFAULT_NO_SLAVES);
+
+        if (!slavesConfig.containsKey(SLAVES)) {
+            throw new RuntimeException("Missing configuration node monitor list");
+        }
+
+        workSpeed="";
+        for (String node: slavesConfig.getStringArray(SLAVES)){
+            workSpeed = workSpeed + node + ",";
+        }
 
         // Start backend server
         BackendService.Processor<BackendService.Iface> processor =
