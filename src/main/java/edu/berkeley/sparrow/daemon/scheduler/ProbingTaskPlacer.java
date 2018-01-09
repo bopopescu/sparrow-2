@@ -175,7 +175,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
         LOG.debug(Logging.functionCall(appId, nodes, tasks));
 
         if (probeRatio < 1.0) {
-            return randomPlacer.placeTasks(appId, requestId, nodes, tasks);
+            return randomPlacer.placeTasks(appId, requestId, nodes, tasks, workerSpeedMap);
         }
 
         Map<InetSocketAddress, TResourceUsage> loads = Maps.newConcurrentMap();
