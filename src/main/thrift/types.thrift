@@ -49,6 +49,7 @@ struct TSchedulingRequest {
   4: optional string description;
   # Hack to allow us to specify the probe ratio for certain types of requests.
   5: optional double probeRatio;
+  6: string workSpeedMap;
 }
 
 struct TTaskPlacement {
