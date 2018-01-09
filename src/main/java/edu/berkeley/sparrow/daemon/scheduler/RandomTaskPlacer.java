@@ -24,7 +24,7 @@ public class RandomTaskPlacer implements TaskPlacer {
   private RandomAssignmentPolicy policy = new RandomAssignmentPolicy();
   @Override
   public Collection<TaskPlacementResponse> placeTasks(String appId,
-      String requestId, Collection<InetSocketAddress> nodes, Collection<TTaskSpec> tasks)
+      String requestId, Collection<InetSocketAddress> nodes, Collection<TTaskSpec> tasks, String workerSpeedMap)
           throws IOException {
     Map<InetSocketAddress, TResourceUsage> nodeUsage = Maps.newHashMap();
     for (InetSocketAddress socket : nodes) {
