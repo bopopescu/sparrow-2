@@ -170,7 +170,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
     @Override
     public Collection<TaskPlacer.TaskPlacementResponse> placeTasks(String appId,
                                                                    String requestId, Collection<InetSocketAddress> nodes,
-                                                                   Collection<TTaskSpec> tasks)
+                                                                   Collection<TTaskSpec> tasks, String workerSpeedMap)
             throws IOException {
         LOG.debug(Logging.functionCall(appId, nodes, tasks));
 
@@ -203,8 +203,6 @@ public class ProbingTaskPlacer implements TaskPlacer {
         //Worker Speed List
         ArrayList<Double> workerSpeedList = new ArrayList<Double>();
 
-        //Get data from Global Config file
-        String workerSpeedMap = ConfVariable.WorkerSpeedMap;
 
         //Extracting sorted nodes and worker speeds
         workerSpeedMap = workerSpeedMap.substring(1, workerSpeedMap.length() - 1);           //remove curly brackets

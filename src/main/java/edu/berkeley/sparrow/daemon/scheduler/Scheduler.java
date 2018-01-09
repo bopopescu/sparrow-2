@@ -134,10 +134,10 @@ public class Scheduler {
         this.conf = conf;
         if (mode.equals("configbased")) {
             state = new ConfigSchedulerState();
-            constrainedPlacer = new ConstraintObservingProbingTaskPlacer();
-            //constrainedPlacer = new ProbingTaskPlacer();
-            unconstrainedPlacer = new RandomTaskPlacer();
-            //unconstrainedPlacer = new ProbingTaskPlacer();
+            //constrainedPlacer = new ConstraintObservingProbingTaskPlacer();
+            constrainedPlacer = new ProbingTaskPlacer();
+            //unconstrainedPlacer = new RandomTaskPlacer();
+            unconstrainedPlacer = new ProbingTaskPlacer();
         } else {
             throw new RuntimeException("Unsupported deployment mode: " + mode);
         }
@@ -391,6 +391,7 @@ public class Scheduler {
                                                                   String requestId) throws IOException {
         LOG.debug(Logging.functionCall(req));
         String app = req.getApp();
+        String workerSpeedMap = req.getWorkSpeedMap();
         List<TTaskSpec> tasks = req.getTasks();
         Set<InetSocketAddress> backends = state.getBackends(app);
         List<InetSocketAddress> backendList = new ArrayList<InetSocketAddress>(backends.size());
@@ -416,10 +417,10 @@ public class Scheduler {
 
         if (constrained) {
             LOG.debug("CONSTRAINED");
-            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks);
+            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap);
         } else {
             LOG.debug("UNCONSTRAINED");
-            return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks);
+            return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap);
 
         }
     }

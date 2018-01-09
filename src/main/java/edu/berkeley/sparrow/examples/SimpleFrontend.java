@@ -135,11 +135,13 @@ public class SimpleFrontend implements FrontendService.Iface {
         private int tasksPerJob;
         private ArrayList<Double> taskDurations;
         private int i;
+        private String workSpeedMap;
 
-        public JobLaunchRunnable(int tasksPerJob, ArrayList<Double> taskDurations) {
+        public JobLaunchRunnable(int tasksPerJob, ArrayList<Double> taskDurations, String workSpeedMap) {
             this.tasksPerJob = tasksPerJob;
             this.taskDurations = taskDurations;
             this.i = 0; //index
+            this.workSpeedMap = workSpeedMap;
         }
 
         @Override
@@ -161,7 +163,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             }
             long start = System.currentTimeMillis();
             try {
-                client.submitJob(APPLICATION_ID, tasks, USER);
+                client.submitJob(APPLICATION_ID, tasks, USER, workSpeedMap);
             } catch (TException e) {
                 LOG.error("Scheduling request failed!", e);
             }
@@ -225,7 +227,6 @@ public class SimpleFrontend implements FrontendService.Iface {
                 workerSpeed.add(Double.valueOf(e.getValue().toString()));
                 workSpeedMap.put(e.getKey().toString(), e.getValue().toString());
             }
-            ConfVariable.WorkerSpeedMap = workSpeed.toString();
 
 
             TOTAL_WORKERS = backends.size();
@@ -279,7 +280,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             client = new SparrowFrontendClient();
             client.initialize(new InetSocketAddress(schedulerHost, schedulerPort), APPLICATION_ID, this);
 
-            JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations);
+            JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workerSpeed.toString());
             ScheduledThreadPoolExecutor taskLauncher = new ScheduledThreadPoolExecutor(1);
             taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
 
