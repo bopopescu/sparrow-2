@@ -40,11 +40,7 @@ public class ComparatorAssignmentPolicy implements AssignmentPolicy {
     
     int i = 0;
     for (TTaskSpec task : tasks) {
-//      System.out.println(results.size());
       Entry<InetSocketAddress, TResourceUsage> entry = results.get(i++ % results.size());
-      //System.out.println(i);
-  //    System.out.println(entry.getKey().toString() + "--->" + entry.getValue().toString());
-   //   System.out.println("ResultSize" + results.size());
       TaskPlacementResponse place = new TaskPlacementResponse(
           task, entry.getKey());
       out.add(place);
