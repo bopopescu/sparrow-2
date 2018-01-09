@@ -17,6 +17,7 @@
 package edu.berkeley.sparrow.examples;
 
 import edu.berkeley.sparrow.api.SparrowFrontendClient;
+import edu.berkeley.sparrow.daemon.SparrowConf;
 import edu.berkeley.sparrow.daemon.scheduler.SchedulerThrift;
 import edu.berkeley.sparrow.daemon.util.ConfigUtil;
 import edu.berkeley.sparrow.daemon.util.Logging;
@@ -29,6 +30,7 @@ import edu.berkeley.sparrow.thrift.TUserGroupInfo;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.math3.distribution.ZipfDistribution;
 import org.apache.log4j.BasicConfigurator;
@@ -36,6 +38,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 
+import java.io.StringReader;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -75,6 +78,8 @@ public class SimpleFrontend implements FrontendService.Iface {
      */
     public static final String TASK_DURATION_MILLIS = "task_duration_millis";
     public static final int DEFAULT_TASK_DURATION_MILLIS = 100;
+
+    private static String SLAVES = "slaves";
 
     /**
      * Host and port where scheduler is running.
@@ -172,6 +177,8 @@ public class SimpleFrontend implements FrontendService.Iface {
         try {
             OptionParser parser = new OptionParser();
             parser.accepts("c", "configuration file").withRequiredArg().ofType(String.class);
+            parser.accepts("w", "configuration file").
+                    withRequiredArg().ofType(String.class);
             parser.accepts("help", "print help statement");
             OptionSet options = parser.parse(args);
             //Logging.configureAuditLoggingNew();
@@ -193,6 +200,36 @@ public class SimpleFrontend implements FrontendService.Iface {
             }
             Set<InetSocketAddress> backends = ConfigUtil.parseBackends(conf);
 
+            //Use this flag to retrieve the backend and worker speed mapping
+            Configuration slavesConfig = new PropertiesConfiguration();
+            if (options.has("w")) {
+                String configFile = (String) options.valueOf("w");
+                try {
+                    slavesConfig = new PropertiesConfiguration(configFile);
+                } catch (ConfigurationException e) {
+                }
+            }
+
+            if (!slavesConfig.containsKey(SLAVES)) {
+                throw new RuntimeException("Missing configuration node monitor list");
+            }
+
+            //Creates a string which can be parse to compare with respective host IP
+            String workSpeed = "";
+            for (String node : slavesConfig.getStringArray(SLAVES)) {
+                workSpeed = workSpeed + node + ",";
+            }
+
+            Properties props = new Properties();
+            props.load(new StringReader(workSpeed.replace(",", "\n")));
+            //Could have use the properties object but trying to make it consistent with other code.
+            ArrayList<Double> workerSpeed = new ArrayList<Double>();
+            for (Map.Entry<Object, Object> e : props.entrySet()) {
+                workerSpeed.add(Double.valueOf(e.getValue().toString()));
+                workSpeedMap.put(e.getKey().toString(), e.getValue().toString());
+            }
+
+
             TOTAL_WORKERS = backends.size();
             int experimentDurationS = conf.getInt(EXPERIMENT_S, DEFAULT_EXPERIMENT_S);
             int taskDurationMillis = conf.getInt(TASK_DURATION_MILLIS, DEFAULT_TASK_DURATION_MILLIS);
@@ -200,14 +237,14 @@ public class SimpleFrontend implements FrontendService.Iface {
             int totalNoOfTasks = conf.getInt(TOTAL_NO_OF_TASKS, DEFAULT_TOTAL_NO_OF_TASKS);
             int tasksPerJob = conf.getInt(TASKS_PER_JOB, DEFAULT_TASKS_PER_JOB);
 
-            //TODO parse for file here as well
-            //Using earlier calculated worker speed generated using above commented code.
-            double[] final_worker_speeds = new double[]{0.38125, 1.0, 0.17499999999999996, 0.38125, 1.0, 0.07187499999999998, 0.01, 0.38125, 1.0, 1.0};
+//            //TODO parse for file here as well
+//            //Using earlier calculated worker speed generated using above commented code.
+//            double[] final_worker_speeds = new double[]{0.38125, 1.0, 0.17499999999999996, 0.38125, 1.0, 0.07187499999999998, 0.01, 0.38125, 1.0, 1.0};
 
             double W = 0; //W is total Worker Speed in the system
-            for (double m : final_worker_speeds)
+            for (double m : workerSpeed) {
                 W += m;
-
+            }
             //Generate Exponential Data
             int median_task_duration = taskDurationMillis;
             double lambda = 1.0 / median_task_duration;
@@ -232,8 +269,8 @@ public class SimpleFrontend implements FrontendService.Iface {
             //Need to add more seconds to make sure all tasks get executed
             experimentDurationS = (int) ((totalNoOfTasks) * (arrivalPeriodMillis + 2) / (1000 * tasksPerJob));
 
-            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
-                    "; W:  " + final_worker_speeds.length + "Worker Speeds: " + final_worker_speeds.toString() + "; TOTAL TASK NUMBER: " + totalNoOfTasks);
+//            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
+//                    "; W:  " + final_worker_speeds.length + "Worker Speeds: " + final_worker_speeds.toString() + "; TOTAL TASK NUMBER: " + totalNoOfTasks);
 
             LOG.debug("Using arrival period of " + arrivalPeriodMillis +
                     " milliseconds and running experiment for " + experimentDurationS + " seconds.");
@@ -268,6 +305,8 @@ public class SimpleFrontend implements FrontendService.Iface {
     }
 
     public static void main(String[] args) {
+        BasicConfigurator.configure();
         new SimpleFrontend().run(args);
+
     }
 }
