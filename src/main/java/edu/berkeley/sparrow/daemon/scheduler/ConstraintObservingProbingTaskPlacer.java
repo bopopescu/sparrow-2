@@ -66,7 +66,7 @@ public class  ConstraintObservingProbingTaskPlacer extends ProbingTaskPlacer {
         List<TTaskSpec> taskList = Lists.newArrayList(task);
         // Should return three neighbors
         Collection<InetSocketAddress> machinesToProbe = getMachinesToProbe(
-            nodes, taskList, 3);
+            nodes, taskList, 2);
 
         // Resource info is ignored by random policy
         Map<InetSocketAddress, TResourceUsage> mockedResources = Maps.newHashMap();
