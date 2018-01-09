@@ -2,14 +2,13 @@ package edu.berkeley.sparrow.daemon.scheduler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import edu.berkeley.sparrow.daemon.util.ConfVariable;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.math3.distribution.UniformRealDistribution;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.apache.thrift.async.AsyncMethodCallback;
@@ -42,6 +41,49 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
     private ThriftClientPool<AsyncClient> clientPool;
     private RandomTaskPlacer randomPlacer;
+
+
+    //Test case in sparrow/src/test/java/edu/berkeley/sparrow/daemon/scheduler/TestPSS.java
+    //Gets index  where cdf allows retrieving index having higher workerspeed with higher probability
+    public static int getIndexFromPSS(double[] cdf_worker_speed, ArrayList<Integer> workerIndex){
+        UniformRealDistribution uniformRealDistribution = new UniformRealDistribution();
+        int workerIndexReservation= java.util.Arrays.binarySearch(cdf_worker_speed, uniformRealDistribution.sample());
+        if(workerIndexReservation == -1){
+            workerIndexReservation = 0;
+        } else{
+            workerIndexReservation = Math.abs(workerIndexReservation) -1;
+        }
+        //This doesn't allow probing the same nodemonitor twice
+        if(workerIndex.contains(workerIndexReservation)){
+             workerIndexReservation = getIndexFromPSS(cdf_worker_speed, workerIndex);
+           }
+        return workerIndexReservation;
+    }
+
+
+
+
+
+    //Test case in sparrow/src/test/java/edu/berkeley/sparrow/daemon/scheduler/TestPSS.java
+    public static double[] getCDFWokerSpeed(ArrayList<Double> workerSpeedList) throws IOException {
+
+        //Gets the CDF of workers Speed
+        double sum = 0;
+        for(double d : workerSpeedList)
+            sum += d;
+
+        double[] cdf_worker_speed = new double[workerSpeedList.size()];
+        double cdf = 0;
+        int j = 0;
+        for (double d: workerSpeedList){
+            d = d/sum;
+            cdf= cdf+ d;
+            cdf_worker_speed[j] = cdf;
+            j++;
+        }
+        //CDF of worker speed + PSS based on Qiong's python pss file
+        return cdf_worker_speed;
+    }
 
     /**
      * This acts as a callback for the asynchronous Thrift interface.
@@ -141,17 +183,83 @@ public class ProbingTaskPlacer implements TaskPlacer {
         // This latch decides how many nodes need to respond for us to make a decision.
         // Using a simple counter is okay for now, but eventually we will want to use
         // per-task information to decide when to return.
-        int probesToLaunch = (int) Math.ceil(probeRatio * tasks.size());
-        probesToLaunch = 2;//Math.min(probesToLaunch, nodes.size());
+        //TODO This assumes that we have more workers than probes
+        int probesToLaunch = SparrowConf.DEFAULT_SAMPLE_RATIO_CONSTRAINED;//Math.min(probesToLaunch, nodes.size());
+
         LOG.debug("Launching " + probesToLaunch + " probes");
 
         // Right now we wait for all probes to return, in the future we might add a timeout
         CountDownLatch latch = new CountDownLatch(probesToLaunch);
+
+        //All the available nodes
         List<InetSocketAddress> nodeList = Lists.newArrayList(nodes);
 
+        //This is supposed to be the nodelist for specified no. of probes
+        List<InetSocketAddress> subNodeList = new ArrayList<InetSocketAddress>();
+
+        //Sorted nodeList based; combining the one received from Map and available as InetSocketAddress object
+        List<InetSocketAddress> newNodeList = Lists.newArrayList();
+
+        //Worker Speed List
+        ArrayList<Double> workerSpeedList = new ArrayList<Double>();
+
+        //Get data from Global Config file
+        String workerSpeedMap = ConfVariable.WorkerSpeedMap;
+
+        //Extracting sorted nodes and worker speeds
+        workerSpeedMap = workerSpeedMap.substring(1, workerSpeedMap.length() - 1);           //remove curly brackets
+        String[] keyValuePairs = workerSpeedMap.split(",");              //split the string to create key-value pairs
+        ArrayList<String> backendList = new ArrayList<String>();
+
+        for (String pair : keyValuePairs)                        //iterate over the pairs
+        {
+            String[] entry = pair.split("=");                   //split the pairs to get key and value
+            backendList.add((String) entry[0].trim());
+            workerSpeedList.add(Double.valueOf((String) entry[1].trim())); //this
+        }
+
+        //Sorting to match the index
+        for (String bNode : backendList) {
+            for (InetSocketAddress node : nodeList) {
+                if (node.getAddress().getHostAddress().equalsIgnoreCase(bNode)) {
+                    newNodeList.add(node);
+                }
+            }
+        }
+
+        double[] cdf_worker_speed = new double[newNodeList.size()];
+
+        try {
+            //gets cdf of worker speed in the range of 0 to 1
+            cdf_worker_speed = getCDFWokerSpeed(workerSpeedList);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //This was used to make sure probes aren't sent to same worker
+        //TODO need to verify if we are allowing this
+        ArrayList<Integer> workerIndex = new ArrayList<Integer>();
+
+        if (nodes.size() > probesToLaunch) {
+            for (int i = 0; i < probesToLaunch; i++) {
+                int workerIndexReservation = getIndexFromPSS(cdf_worker_speed, workerIndex);
+                workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
+            }
+
+            //After PSS, we're getting the index of worker with higher probability
+            //Nodelist contains the list of workers and workerIndex contains indices from that node list
+            //So this comparision should make sense but using hashmap would be a better idea.
+            for (int j = 0; j < workerIndex.size(); j++) {
+                subNodeList.add(newNodeList.get(workerIndex.get(j)));
+            }
+            nodeList = subNodeList;
+        }
+
+
         // Get a random subset of nodes by shuffling list
-        Collections.shuffle(nodeList);
-        nodeList = nodeList.subList(0, probesToLaunch);
+//        Collections.shuffle(nodeList);
+//        nodeList = nodeList.subList(0, probesToLaunch);
+
 
         for (InetSocketAddress node : nodeList) {
             try {

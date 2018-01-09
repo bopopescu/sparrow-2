@@ -19,10 +19,7 @@ package edu.berkeley.sparrow.examples;
 import edu.berkeley.sparrow.api.SparrowFrontendClient;
 import edu.berkeley.sparrow.daemon.SparrowConf;
 import edu.berkeley.sparrow.daemon.scheduler.SchedulerThrift;
-import edu.berkeley.sparrow.daemon.util.ConfigUtil;
-import edu.berkeley.sparrow.daemon.util.Logging;
-import edu.berkeley.sparrow.daemon.util.MinMax;
-import edu.berkeley.sparrow.daemon.util.Serialization;
+import edu.berkeley.sparrow.daemon.util.*;
 import edu.berkeley.sparrow.thrift.FrontendService;
 import edu.berkeley.sparrow.thrift.TFullTaskId;
 import edu.berkeley.sparrow.thrift.TTaskSpec;
@@ -228,6 +225,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                 workerSpeed.add(Double.valueOf(e.getValue().toString()));
                 workSpeedMap.put(e.getKey().toString(), e.getValue().toString());
             }
+            ConfVariable.WorkerSpeedMap = workSpeed.toString();
 
 
             TOTAL_WORKERS = backends.size();
