@@ -71,12 +71,14 @@ public class SimpleBackend implements BackendService.Iface {
     private static final int WORKER_THREADS = 1;
     private static final String APP_ID = "sleepApp";
 
-    /** Configuration parameters to specify where the node monitor is running. */
+    /**
+     * Configuration parameters to specify where the node monitor is running.
+     */
     private static final String NODE_MONITOR_HOST = "node_monitor_host";
     private static final String DEFAULT_NODE_MONITOR_HOST = "localhost";
     private static String NODE_MONITOR_PORT = "node_monitor_port";
     private static int nodeMonitorPort;
-    private static String nodeMonitorHost= "localhost";
+    private static String nodeMonitorHost = "localhost";
 
     private static String SLAVES = "slaves";
     private static String DEFAULT_NO_SLAVES = "slaves";
@@ -92,7 +94,7 @@ public class SimpleBackend implements BackendService.Iface {
 
     /**
      * Keeps track of finished tasks.
-     *
+     * <p>
      * A single thread pulls items off of this queue and uses
      * the client to notify the node monitor that tasks have finished.
      */
@@ -100,7 +102,7 @@ public class SimpleBackend implements BackendService.Iface {
 
     /**
      * Thread that sends taskFinished() RPCs to the node monitor.
-     *
+     * <p>
      * We do this in a single thread so that we just need a single client to the node monitor
      * and don't need to create a new client for each task.
      */
@@ -131,8 +133,8 @@ public class SimpleBackend implements BackendService.Iface {
         private long taskStartTime;
 
         public TaskRunnable(String requestId, TFullTaskId taskId, ByteBuffer message) {
-            this.taskStartTime= message.getLong();
-            this.taskDuration=message.getDouble();
+            this.taskStartTime = message.getLong();
+            this.taskDuration = message.getDouble();
             this.taskId = taskId;
         }
 
@@ -152,25 +154,25 @@ public class SimpleBackend implements BackendService.Iface {
             try {
                 thisHost = Inet4Address.getLocalHost().getHostAddress();
 
-            //Getting rid of repeated parsing of the string
-            if (globalHostWorkerSpeed == -1.0) {
-                Properties props = new Properties();
-                props.load(new StringReader(workSpeed.replace(",", "\n")));
-                for (Map.Entry<Object, Object> e : props.entrySet()) {
-                    if ((String.valueOf(e.getKey())).equals(thisHost)) {
-                        hostWorkSpeed = Double.valueOf((String)e.getValue());
+                //Getting rid of repeated parsing of the string
+                if (globalHostWorkerSpeed == -1.0) {
+                    Properties props = new Properties();
+                    props.load(new StringReader(workSpeed.replace(",", "\n")));
+                    for (Map.Entry<Object, Object> e : props.entrySet()) {
+                        if ((String.valueOf(e.getKey())).equals(thisHost)) {
+                            hostWorkSpeed = Double.valueOf((String) e.getValue());
+                        }
                     }
+                    globalHostWorkerSpeed = hostWorkSpeed;
+                } else {
+                    hostWorkSpeed = globalHostWorkerSpeed;
                 }
-                globalHostWorkerSpeed = hostWorkSpeed;
-            } else{
-                hostWorkSpeed = globalHostWorkerSpeed;
-            }
 
-            long sleepTime = (long)((Double.valueOf(taskDuration)/Double.valueOf(hostWorkSpeed)));
+                long sleepTime = (long) ((Double.valueOf(taskDuration) / Double.valueOf(hostWorkSpeed)));
 
-            Thread.sleep(sleepTime);
+                Thread.sleep(sleepTime);
 
-            LOG.debug("WS: " + hostWorkSpeed + "ms" + ";  Host: "+ thisHost + "; sleepTime: " + sleepTime + "; taskDuration " + taskDuration);
+                LOG.debug("WS: " + hostWorkSpeed + "ms" + ";  Host: " + thisHost + "; sleepTime: " + sleepTime + "; taskDuration " + taskDuration);
 
             } catch (UnknownHostException e) {
                 e.printStackTrace();
@@ -179,13 +181,12 @@ public class SimpleBackend implements BackendService.Iface {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            int tasks = numTasks.addAndGet(1);
-            double taskRate = ((double) tasks) * 1000 /
-                    (System.currentTimeMillis() - startTime);
+
+//            int tasks = numTasks.addAndGet(1);
+//            double taskRate = ((double) tasks) * 1000 /
+//                    (System.currentTimeMillis() - startTime);
 
 //          LOG.debug("Aggregate task rate: " + taskRate);
-//          LOG.debug("Wait Time for " + taskId.getTaskId() + " : " + (startTime - taskStartTime));
-//          LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
 
             LOG.debug("Actual task in " + (taskDuration) + "ms");
             LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
@@ -199,14 +200,12 @@ public class SimpleBackend implements BackendService.Iface {
             }
             client.getInputProtocol().getTransport().close();
             client.getOutputProtocol().getTransport().close();
-            //LOG.debug("Task running for " + (System.currentTimeMillis() - taskStart) + " ms");
-
         }
     }
 
     /**
      * Initializes the backend by registering with the node monitor.
-     *
+     * <p>
      * Also starts a thread that handles finished tasks (by sending an RPC to the node monitor).
      */
     public void initialize(int listenPort, String nodeMonitorHost, int nodeMonitorPort) {
@@ -262,23 +261,27 @@ public class SimpleBackend implements BackendService.Iface {
             String configFile = (String) options.valueOf("c");
             try {
                 conf = new PropertiesConfiguration(configFile);
-            } catch (ConfigurationException e) {}
+            } catch (ConfigurationException e) {
+            }
         }
 
+        //Use this flag to retrieve the backend and worker speed mapping
         Configuration slavesConfig = new PropertiesConfiguration();
         if (options.has("w")) {
             String configFile = (String) options.valueOf("w");
             try {
                 slavesConfig = new PropertiesConfiguration(configFile);
-            } catch (ConfigurationException e) {}
+            } catch (ConfigurationException e) {
+            }
         }
 
         if (!slavesConfig.containsKey(SLAVES)) {
             throw new RuntimeException("Missing configuration node monitor list");
         }
 
-        workSpeed="";
-        for (String node: slavesConfig.getStringArray(SLAVES)){
+        //Creates a string which can be parse to compare with respective host IP
+        workSpeed = "";
+        for (String node : slavesConfig.getStringArray(SLAVES)) {
             workSpeed = workSpeed + node + ",";
         }
 
@@ -302,21 +305,5 @@ public class SimpleBackend implements BackendService.Iface {
             LOG.debug("Error while registering backend: " + e.getMessage());
         }
 
-
-/*
-
-
-    // Start backend server
-    SimpleBackend protoBackend = new SimpleBackend();
-    BackendService.Processor<BackendService.Iface> processor =
-        new BackendService.Processor<BackendService.Iface>(protoBackend);
-
-    int listenPort = conf.getInt(LISTEN_PORT, DEFAULT_LISTEN_PORT);
-    int nodeMonitorPort = conf.getInt(NODE_MONITOR_PORT, NodeMonitorThrift.DEFAULT_NM_THRIFT_PORT);
-    String nodeMonitorHost = conf.getString(NODE_MONITOR_HOST, DEFAULT_NODE_MONITOR_HOST);
-    TServers.launchSingleThreadThriftServer(listenPort, processor);
-    protoBackend.initialize(listenPort, nodeMonitorHost, nodeMonitorPort);
-
-*/
     }
 }

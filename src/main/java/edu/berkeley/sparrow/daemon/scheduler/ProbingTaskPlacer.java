@@ -30,157 +30,163 @@ import edu.berkeley.sparrow.thrift.TTaskSpec;
  * A task placer which probes node monitors in order to determine placement.
  */
 public class ProbingTaskPlacer implements TaskPlacer {
-  private static final Logger LOG = Logger.getLogger(ProbingTaskPlacer.class);
-  protected static final Logger AUDIT_LOG = Logging.getAuditLogger(ProbingTaskPlacer.class);
+    private static final Logger LOG = Logger.getLogger(ProbingTaskPlacer.class);
+    protected static final Logger AUDIT_LOG = Logging.getAuditLogger(ProbingTaskPlacer.class);
 
-  private static final int MAX_PROBE_WAIT_MS = 500;
+    private static final int MAX_PROBE_WAIT_MS = 5;
 
-  /** See {@link SparrowConf.PROBE_MULTIPLIER} */
-  private double probeRatio;
+    /**
+     * See {@link SparrowConf.PROBE_MULTIPLIER}
+     */
+    private double probeRatio;
 
-  private ThriftClientPool<AsyncClient> clientPool;
-  private RandomTaskPlacer randomPlacer;
+    private ThriftClientPool<AsyncClient> clientPool;
+    private RandomTaskPlacer randomPlacer;
 
-  /**
-   * This acts as a callback for the asynchronous Thrift interface.
-   */
-  protected class ProbeCallback implements AsyncMethodCallback<getLoad_call> {
-    InetSocketAddress socket;
-    /** This should not be modified after the {@code latch} count is zero! */
-    Map<InetSocketAddress, TResourceUsage> loads;
-    /** Synchronization latch so caller can return when enough backends have
-     * responded. */
-    CountDownLatch latch;
-    private String appId;
-    private String requestId;
-    private AsyncClient client;
+    /**
+     * This acts as a callback for the asynchronous Thrift interface.
+     */
+    protected class ProbeCallback implements AsyncMethodCallback<getLoad_call> {
+        InetSocketAddress socket;
+        /**
+         * This should not be modified after the {@code latch} count is zero!
+         */
+        Map<InetSocketAddress, TResourceUsage> loads;
+        /**
+         * Synchronization latch so caller can return when enough backends have
+         * responded.
+         */
+        CountDownLatch latch;
+        private String appId;
+        private String requestId;
+        private AsyncClient client;
 
-    ProbeCallback(
-        InetSocketAddress socket, Map<InetSocketAddress, TResourceUsage> loads,
-        CountDownLatch latch, String appId, String requestId, AsyncClient client) {
-      this.socket = socket;
-      this.loads = loads;
-      this.latch = latch;
-      this.appId = appId;
-      this.requestId = requestId;
-      this.client = client;
+        ProbeCallback(
+                InetSocketAddress socket, Map<InetSocketAddress, TResourceUsage> loads,
+                CountDownLatch latch, String appId, String requestId, AsyncClient client) {
+            this.socket = socket;
+            this.loads = loads;
+            this.latch = latch;
+            this.appId = appId;
+            this.requestId = requestId;
+            this.client = client;
+        }
+
+        @Override
+        public void onComplete(getLoad_call response) {
+            try {
+                LOG.debug("Received load response from node " + socket + ": load : " + response.getResult().toString());
+            } catch (TException e1) {
+                LOG.error("Probe returned no information for " + appId);
+            }
+            // TODO: Include the port, as well as the address, in the log message, so this
+            // works properly when multiple daemons are running on the same machine.
+            int queueLength = -1;
+            int cores = -1;
+            try {
+                queueLength = response.getResult().get(appId).queueLength;
+                cores = response.getResult().get(appId).resources.cores;
+            } catch (TException e1) {
+                LOG.error("Probe returned no information for " + appId);
+            }
+            AUDIT_LOG.info(Logging.auditEventString("probe_completion", requestId,
+                    socket.getAddress().getHostAddress(),
+                    queueLength, cores));
+            try {
+                Map<String, TResourceUsage> resp = response.getResult();
+                if (!resp.containsKey(appId)) {
+                    LOG.warn("Probe returned no load information for " + appId);
+                } else {
+                    TResourceUsage result = response.getResult().get(appId);
+                    loads.put(socket, result);
+                    latch.countDown();
+                }
+                clientPool.returnClient(socket, client);
+            } catch (Exception e) {
+                LOG.error("Error getting resources from response data", e);
+            }
+        }
+
+        @Override
+        public void onError(Exception exception) {
+            LOG.error("Error in probe callback", exception);
+            // TODO: Figure out what failure model we want here
+            latch.countDown();
+        }
+    }
+
+
+    @Override
+    public void initialize(Configuration conf, ThriftClientPool<AsyncClient> clientPool) {
+        probeRatio = conf.getDouble(SparrowConf.SAMPLE_RATIO,
+                SparrowConf.DEFAULT_SAMPLE_RATIO);
+        this.clientPool = clientPool;
+        randomPlacer = new RandomTaskPlacer();
+        randomPlacer.initialize(conf, clientPool);
     }
 
     @Override
-    public void onComplete(getLoad_call response) {
-      try {
-        LOG.debug("Received load response from node " + socket + ": load : " + response.getResult().toString());
-      } catch (TException e1) {
-        LOG.error("Probe returned no information for " + appId);
-      }
-      // TODO: Include the port, as well as the address, in the log message, so this
-      // works properly when multiple daemons are running on the same machine.
-      int queueLength = -1;
-      int cores = -1;
-      try {
-        queueLength = response.getResult().get(appId).queueLength;
-        cores = response.getResult().get(appId).resources.cores;
-      } catch (TException e1) {
-        LOG.error("Probe returned no information for " + appId);
-      }
-      AUDIT_LOG.info(Logging.auditEventString("probe_completion", requestId,
-              socket.getAddress().getHostAddress(),
-              queueLength, cores));
-      try {
-        Map<String, TResourceUsage> resp = response.getResult();
-        if (!resp.containsKey(appId)) {
-          LOG.warn("Probe returned no load information for " + appId);
+    public Collection<TaskPlacer.TaskPlacementResponse> placeTasks(String appId,
+                                                                   String requestId, Collection<InetSocketAddress> nodes,
+                                                                   Collection<TTaskSpec> tasks)
+            throws IOException {
+        LOG.debug(Logging.functionCall(appId, nodes, tasks));
+
+        if (probeRatio < 1.0) {
+            return randomPlacer.placeTasks(appId, requestId, nodes, tasks);
         }
-        else {
-          TResourceUsage result = response.getResult().get(appId);
-          loads.put(socket,result);
-          latch.countDown();
+
+        Map<InetSocketAddress, TResourceUsage> loads = Maps.newConcurrentMap();
+
+        // This latch decides how many nodes need to respond for us to make a decision.
+        // Using a simple counter is okay for now, but eventually we will want to use
+        // per-task information to decide when to return.
+        int probesToLaunch = (int) Math.ceil(probeRatio * tasks.size());
+        probesToLaunch = 2;//Math.min(probesToLaunch, nodes.size());
+        LOG.debug("Launching " + probesToLaunch + " probes");
+
+        // Right now we wait for all probes to return, in the future we might add a timeout
+        CountDownLatch latch = new CountDownLatch(probesToLaunch);
+        List<InetSocketAddress> nodeList = Lists.newArrayList(nodes);
+
+        // Get a random subset of nodes by shuffling list
+        Collections.shuffle(nodeList);
+        nodeList = nodeList.subList(0, probesToLaunch);
+
+        for (InetSocketAddress node : nodeList) {
+            try {
+                AsyncClient client = clientPool.borrowClient(node);
+                ProbeCallback callback = new ProbeCallback(node, loads, latch, appId, requestId,
+                        client);
+                LOG.debug("Launching probe on node: " + node);
+                AUDIT_LOG.info(Logging.auditEventString("probe_launch", requestId,
+                        node.getAddress().getHostAddress()));
+                client.getLoad(appId, requestId, callback);
+            } catch (Exception e) {
+                LOG.error(e);
+            }
         }
-        clientPool.returnClient(socket, client);
-      } catch (Exception e) {
-        LOG.error("Error getting resources from response data", e);
-      }
+
+        try {
+            latch.await(MAX_PROBE_WAIT_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        for (InetSocketAddress machine : nodeList) {
+            if (!loads.containsKey(machine)) {
+                // TODO maybe use stale data here?
+                LOG.debug("Load doesn't contain Machine address" + machine);
+                // Assume this machine is really heavily loaded
+                loads.put(machine,
+                        TResources.createResourceUsage(
+                                TResources.createResourceVector(1000, 4), 100));
+            }
+        }
+        AssignmentPolicy assigner = new ComparatorAssignmentPolicy(
+                new TResources.MinQueueComparator());
+        Collection<TaskPlacementResponse> out = assigner.assignTasks(tasks, loads);
+
+        return out;
     }
-
-    @Override
-    public void onError(Exception exception) {
-      LOG.error("Error in probe callback", exception);
-      // TODO: Figure out what failure model we want here
-      latch.countDown();
-    }
-  }
-
-
-  @Override
-  public void initialize(Configuration conf, ThriftClientPool<AsyncClient> clientPool) {
-    probeRatio = conf.getDouble(SparrowConf.SAMPLE_RATIO,
-        SparrowConf.DEFAULT_SAMPLE_RATIO);
-    this.clientPool = clientPool;
-    randomPlacer = new RandomTaskPlacer();
-    randomPlacer.initialize(conf, clientPool);
-  }
-
-  @Override
-  public Collection<TaskPlacer.TaskPlacementResponse> placeTasks(String appId,
-      String requestId, Collection<InetSocketAddress> nodes,
-      Collection<TTaskSpec> tasks)
-          throws IOException {
-    LOG.debug(Logging.functionCall(appId, nodes, tasks));
-
-    if (probeRatio < 1.0) {
-      return randomPlacer.placeTasks(appId, requestId, nodes, tasks);
-    }
-
-    Map<InetSocketAddress, TResourceUsage> loads = Maps.newConcurrentMap();
-
-    // This latch decides how many nodes need to respond for us to make a decision.
-    // Using a simple counter is okay for now, but eventually we will want to use
-    // per-task information to decide when to return.
-    int probesToLaunch = (int) Math.ceil(probeRatio * tasks.size());
-    probesToLaunch = 2;//Math.min(probesToLaunch, nodes.size());
-    LOG.debug("Launching " + probesToLaunch + " probes");
-
-    // Right now we wait for all probes to return, in the future we might add a timeout
-    CountDownLatch latch = new CountDownLatch(probesToLaunch);
-    List<InetSocketAddress> nodeList = Lists.newArrayList(nodes);
-
-    // Get a random subset of nodes by shuffling list
-    Collections.shuffle(nodeList);
-    nodeList = nodeList.subList(0, probesToLaunch);
-
-    for (InetSocketAddress node : nodeList) {
-      try {
-        AsyncClient client = clientPool.borrowClient(node);
-        ProbeCallback callback = new ProbeCallback(node, loads, latch, appId, requestId,
-                                                   client);
-        LOG.debug("Launching probe on node: " + node);
-        AUDIT_LOG.info(Logging.auditEventString("probe_launch", requestId,
-                                                node.getAddress().getHostAddress()));
-        client.getLoad(appId, requestId, callback);
-      } catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
-    try {
-      latch.await(MAX_PROBE_WAIT_MS, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-   // System.out.println("loads" + loads.toString());
-    for (InetSocketAddress machine : nodeList) {
-      if (!loads.containsKey(machine)) {
-        // TODO maybe use stale data here?
-        // Assume this machine is really heavily loaded
-        loads.put(machine,
-            TResources.createResourceUsage(
-                TResources.createResourceVector(1000, 4), 100));
-      }
-    }
-    AssignmentPolicy assigner = new ComparatorAssignmentPolicy(
-        new TResources.MinQueueComparator());
-    Collection<TaskPlacementResponse> out = assigner.assignTasks(tasks, loads);
-
-    return out;
-  }
 }
