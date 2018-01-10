@@ -64,7 +64,7 @@ public class SimpleFrontend implements FrontendService.Iface {
     /**
      * Number of tasks per job.
      */
-    public static final String TOTAL_NO_OF_TASKS = "tasks_per_job";
+    public static final String TOTAL_NO_OF_TASKS = "total_no_tasks";
     public static final int DEFAULT_TOTAL_NO_OF_TASKS = 3500;
 
     public static final String LOAD = "load";
