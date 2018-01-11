@@ -209,6 +209,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
         String[] keyValuePairs = workerSpeedMap.split(",");              //split the string to create key-value pairs
         ArrayList<String> backendList = new ArrayList<String>();
 
+
         for (String pair : keyValuePairs)                        //iterate over the pairs
         {
             String[] entry = pair.split("=");                   //split the pairs to get key and value
@@ -258,16 +259,19 @@ public class ProbingTaskPlacer implements TaskPlacer {
 //        Collections.shuffle(nodeList);
 //        nodeList = nodeList.subList(0, probesToLaunch);
 
-
+        int i =0;
         for (InetSocketAddress node : nodeList) {
             try {
+
                 AsyncClient client = clientPool.borrowClient(node);
                 ProbeCallback callback = new ProbeCallback(node, loads, latch, appId, requestId,
                         client);
+                callback.loads.get(appId).scaledQueueLength = callback.loads.get(appId).queueLength/workerSpeedList.get(i);
                 LOG.debug("Launching probe on node: " + node);
                 AUDIT_LOG.info(Logging.auditEventString("probe_launch", requestId,
                         node.getAddress().getHostAddress()));
                 client.getLoad(appId, requestId, callback);
+                i++;
             } catch (Exception e) {
                 LOG.error(e);
             }

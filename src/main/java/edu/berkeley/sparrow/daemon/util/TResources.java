@@ -105,10 +105,11 @@ public class TResources {
   public static class MinQueueComparator implements Comparator<TResourceUsage> {
     @Override
     public int compare(TResourceUsage u1, TResourceUsage u2) {
-      int q1 = u1.queueLength;
-      int q2 = u2.queueLength;
+      double q1 = u1.scaledQueueLength;
+      double q2 = u2.scaledQueueLength;
       if (q1 > q2) { return 1; }
       if (q1 < q2) { return -1; }
+      System.out.println(q1 + ":" + q2);
       if(q1 == q2) {
         Random random = new Random();
         return random.nextBoolean() ? 1 : -1;}
