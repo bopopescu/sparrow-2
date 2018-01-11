@@ -102,16 +102,17 @@ public class ProbingTaskPlacer implements TaskPlacer {
         private String appId;
         private String requestId;
         private AsyncClient client;
-
+	private Double workSpeed;
         ProbeCallback(
                 InetSocketAddress socket, Map<InetSocketAddress, TResourceUsage> loads,
-                CountDownLatch latch, String appId, String requestId, AsyncClient client) {
+                CountDownLatch latch, String appId, String requestId, AsyncClient client,  Double workerSpeed) {
             this.socket = socket;
             this.loads = loads;
             this.latch = latch;
             this.appId = appId;
             this.requestId = requestId;
             this.client = client;
+	    this.workSpeed = workerSpeed;
         }
 
         @Override
@@ -140,7 +141,10 @@ public class ProbingTaskPlacer implements TaskPlacer {
                     LOG.warn("Probe returned no load information for " + appId);
                 } else {
                     TResourceUsage result = response.getResult().get(appId);
-                    loads.put(socket, result);
+			double scaledQueueLength = queueLength/workSpeed;
+                    TResourceUsage newResult = TResources.createResourceUsage(
+		    TResources.createResourceVector(result.resources.getMemory(), result.resources.getCores()), result.queueLength, scaledQueueLength);//New constructor will parse scaledQueueLength
+                    loads.put(socket, newResult);
                     latch.countDown();
                 }
                 clientPool.returnClient(socket, client);
@@ -265,8 +269,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
                 AsyncClient client = clientPool.borrowClient(node);
                 ProbeCallback callback = new ProbeCallback(node, loads, latch, appId, requestId,
-                        client);
-                callback.loads.get(appId).scaledQueueLength = callback.loads.get(appId).queueLength/workerSpeedList.get(i);
+		client, workerSpeedList.get(i));
                 LOG.debug("Launching probe on node: " + node);
                 AUDIT_LOG.info(Logging.auditEventString("probe_launch", requestId,
                         node.getAddress().getHostAddress()));

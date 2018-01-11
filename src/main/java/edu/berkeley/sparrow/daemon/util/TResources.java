@@ -30,6 +30,15 @@ public class TResources {
     out.resources = res;
     return out;
   }
+
+  /** Constructor for resource usage. */
+  public static TResourceUsage createResourceUsage(TResourceVector res, int queueLength, double scaledQueueLength) {
+    TResourceUsage out = new TResourceUsage();
+    out.queueLength = queueLength;
+    out.resources = res;
+    out.scaledQueueLength= scaledQueueLength;
+    return out;
+  }
   
   /** Return a copy of a resource */
   public static TResourceVector clone(TResourceVector in) {
@@ -107,9 +116,12 @@ public class TResources {
     public int compare(TResourceUsage u1, TResourceUsage u2) {
       double q1 = u1.scaledQueueLength;
       double q2 = u2.scaledQueueLength;
+//System.out.println("NOOOOO");
+//      System.out.println(q1 + ":" + q2);
       if (q1 > q2) { return 1; }
       if (q1 < q2) { return -1; }
-      System.out.println(q1 + ":" + q2);
+//System.out.println("NOOOOO");
+  //    System.out.println(q1 + ":" + q2);
       if(q1 == q2) {
         Random random = new Random();
         return random.nextBoolean() ? 1 : -1;}
