@@ -465,6 +465,32 @@ public class Scheduler {
         }
     }
 
+
+	private class sendSchedulerMessageCallback implements
+            AsyncMethodCallback<frontendMessage_call> {
+        private InetSocketAddress frontendSocket;
+        private AsyncClient client;
+
+        public sendSchedulerMessageCallback(InetSocketAddress socket, AsyncClient client) {
+            frontendSocket = socket;
+            this.client = client;
+        }
+
+        public void onComplete(frontendMessage_call response) {
+            try {
+                frontendClientPool.returnClient(frontendSocket, client);
+            } catch (Exception e) {
+                LOG.error(e);
+            }
+        }
+
+        public void onError(Exception exception) {
+            // Do not return error client to pool
+            LOG.error(exception);
+        }
+    }
+
+
     public void sendFrontendMessage(String app, TFullTaskId taskId,
                                     int status, ByteBuffer message) {
         LOG.debug(Logging.functionCall(app, taskId, message));
@@ -485,4 +511,27 @@ public class Scheduler {
             LOG.error("Error launching message on frontend: " + app, e);
         }
     }
+
+    public void sendSchedulerMessage(String app, TFullTaskId taskId,
+                                    int status, ByteBuffer message) {
+        LOG.debug(Logging.functionCall(app, taskId, message) + "<------------zzzzz");
+        InetSocketAddress frontend = frontendSockets.get(app);
+        if (frontend == null) {
+            LOG.error("Requested message sent to unregistered app: " + app);
+            return;
+        }
+//        try {
+//            AsyncClient client = frontendClientPool.borrowClient(frontend);
+//            client.frontendMessage(taskId, status, message,
+//                    new sendFrontendMessageCallback(frontend, client));
+//        } catch (IOException e) {
+//            LOG.error("Error launching message on frontend: " + app, e);
+//        } catch (TException e) {
+//            LOG.error("Error launching message on frontend: " + app, e);
+//        } catch (Exception e) {
+//            LOG.error("Error launching message on frontend: " + app, e);
+//        }
+    }
+
+
 }

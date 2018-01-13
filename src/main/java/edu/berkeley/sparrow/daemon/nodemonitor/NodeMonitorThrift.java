@@ -103,4 +103,11 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface,
   public void tasksFinished(List<TFullTaskId> tasks) throws TException {
     nodeMonitor.tasksFinished(tasks);
   }
+  
+   @Override
+  public void sendSchedulerMessage(String app, TFullTaskId taskId,
+                                  int status, ByteBuffer message) throws TException {
+    nodeMonitor.sendSchedulerMessage(app, taskId, status, message);
+  }
+
 }
