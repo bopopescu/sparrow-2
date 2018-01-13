@@ -17,7 +17,6 @@
 package edu.berkeley.sparrow.examples;
 
 import edu.berkeley.sparrow.api.SparrowFrontendClient;
-import edu.berkeley.sparrow.daemon.SparrowConf;
 import edu.berkeley.sparrow.daemon.scheduler.SchedulerThrift;
 import edu.berkeley.sparrow.daemon.util.*;
 import edu.berkeley.sparrow.thrift.FrontendService;
@@ -39,6 +38,7 @@ import java.io.StringReader;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -266,7 +266,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             long arrivalPeriodMillis = (long) (tasksPerJob / arrivalRate);
             //Get Experiment duration based on no. of tasks (in s)
             //Need to add more seconds to make sure all tasks get executed
-            experimentDurationS = (int) ((totalNoOfTasks) * (arrivalPeriodMillis + 2) / (1000 * tasksPerJob));
+            experimentDurationS = (int) ((totalNoOfTasks) * (arrivalPeriodMillis) / (1000 * tasksPerJob));
 
 //            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
 //                    "; W:  " + final_worker_speeds.length + "Worker Speeds: " + final_worker_speeds.toString() + "; TOTAL TASK NUMBER: " + totalNoOfTasks);
@@ -282,13 +282,28 @@ public class SimpleFrontend implements FrontendService.Iface {
 
             JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
             ScheduledThreadPoolExecutor taskLauncher = new ScheduledThreadPoolExecutor(1);
-            taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
+            ScheduledFuture<?> sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
 
 
             long startTime = System.currentTimeMillis();
+
             LOG.debug("sleeping");
+            boolean isCanceled = false;
+            boolean restarted = false;
             while (System.currentTimeMillis() < startTime + experimentDurationS * 1000) {
+
                 Thread.sleep(100);
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                if (elapsedTime > 3*60*1000 && isCanceled == false) {
+                    LOG.debug("Cancelling <--");
+                    sf.cancel(true);
+                    isCanceled = true;
+                }
+                if (elapsedTime > 5 * 60 * 1000 && restarted == false) {
+                    LOG.debug("Restarting <--");
+                    sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis*2, TimeUnit.MILLISECONDS);
+                    restarted = true;
+                }
             }
             taskLauncher.shutdown();
         } catch (Exception e) {

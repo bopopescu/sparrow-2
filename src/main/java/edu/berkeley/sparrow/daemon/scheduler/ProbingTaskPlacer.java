@@ -176,6 +176,13 @@ public class ProbingTaskPlacer implements TaskPlacer {
         LOG.debug("Real: " + workerSpeedMap + "VS: Estimated:  " + estimatedWorkerSpeedMap);
 
 
+        String workerMapBeingUsed = "";
+        if (estimatedWorkerSpeedMap.equalsIgnoreCase("{}"))
+            workerMapBeingUsed  = workerSpeedMap;
+        else
+            workerMapBeingUsed = estimatedWorkerSpeedMap;
+
+
         if (probeRatio < 1.0) {
             return randomPlacer.placeTasks(appId, requestId, nodes, tasks, workerSpeedMap, estimatedWorkerSpeedMap);
         }
@@ -201,13 +208,15 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
         //Sorted nodeList based; combining the one received from Map and available as InetSocketAddress object
         List<InetSocketAddress> newNodeList = Lists.newArrayList();
+        //TODO Bettter structure sorting, use of variables :  ZM Jan 12
+
 
         //Worker Speed List
         ArrayList<Double> workerSpeedList = new ArrayList<Double>();
 
 
         //Extracting sorted nodes and worker speeds
-        workerSpeedMap = workerSpeedMap.substring(1, workerSpeedMap.length() - 1);           //remove curly brackets
+        workerMapBeingUsed = workerSpeedMap.substring(1, workerMapBeingUsed.length() - 1);           //remove curly brackets
         String[] keyValuePairs = workerSpeedMap.split(",");              //split the string to create key-value pairs
         ArrayList<String> backendList = new ArrayList<String>();
 

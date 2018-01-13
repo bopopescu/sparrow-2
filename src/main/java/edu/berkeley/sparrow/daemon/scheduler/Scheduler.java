@@ -422,7 +422,8 @@ public class Scheduler {
 
         if (constrained) {
             LOG.debug("CONSTRAINED");
-            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap, estimatedWorkerSpeedMap.toString());
+            //TODO Change to hashmap
+            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap, estimatedWorkerSpeedMap.toString()); // DOn't pass too much string
         } else {
             LOG.debug("UNCONSTRAINED");
             return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap, estimatedWorkerSpeedMap.toString());
@@ -518,7 +519,7 @@ public class Scheduler {
     }
 
     public void sendSchedulerMessage(String app, TFullTaskId taskId,
-                                    int status, ByteBuffer message, String hostAddress) {
+                                    int status, ByteBuffer message, String hostAddress) { //TODO Find the faster way to pass things
         LOG.debug(Logging.functionCall(app, taskId, message));
         double workerSpeed = message.getDouble();
         LOG.debug("THIS IS SCHEDULER where WS:--> " + workerSpeed + "Host Address: " + hostAddress);
