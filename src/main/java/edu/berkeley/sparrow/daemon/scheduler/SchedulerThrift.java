@@ -79,8 +79,8 @@ public class SchedulerThrift implements SchedulerService.Iface {
 
   @Override
   public void sendSchedulerMessage(String app, TFullTaskId taskId,
-                                  int status, ByteBuffer message) throws TException {
-    scheduler.sendSchedulerMessage(app, taskId, status, message);
+                                  int status, ByteBuffer message, String hostAddress) throws TException {
+    scheduler.sendSchedulerMessage(app, taskId, status, message, hostAddress);
   }
 
 }

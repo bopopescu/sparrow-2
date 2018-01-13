@@ -106,8 +106,8 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface,
   
    @Override
   public void sendSchedulerMessage(String app, TFullTaskId taskId,
-                                  int status, ByteBuffer message) throws TException {
-    nodeMonitor.sendSchedulerMessage(app, taskId, status, message);
+                                  int status, ByteBuffer message, String hostAddress) throws TException {
+    nodeMonitor.sendSchedulerMessage(app, taskId, status, message, hostAddress);
   }
 
 }

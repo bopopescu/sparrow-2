@@ -215,7 +215,7 @@ public class SimpleBackend implements BackendService.Iface {
                 ByteBuffer message = ByteBuffer.allocate(8);
                 //Send the task Completion Time
                 message.putDouble(movingAverage);
-                client.sendSchedulerMessage(taskId.appId, taskId, 0, ByteBuffer.wrap(message.array()));
+                client.sendSchedulerMessage(taskId.appId, taskId, 0, ByteBuffer.wrap(message.array()), thisHost);
             } catch (TException e) {
                 e.printStackTrace();
             }

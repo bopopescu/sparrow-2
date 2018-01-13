@@ -246,7 +246,7 @@ private class sendSchedulerMessageCallback implements
   }
 
   public void sendSchedulerMessage(String app, TFullTaskId taskId,
-                                  int status, ByteBuffer message) {
+                                  int status, ByteBuffer message, String hostAddress) {
     LOG.debug(Logging.functionCall(app, taskId, message));
     if (!requestSchedulers.containsKey(taskId.getRequestId())) {
       LOG.error("Missing scheduler info for request: " + taskId);
@@ -262,7 +262,7 @@ private class sendSchedulerMessageCallback implements
       LOG.debug("taskID: " + taskId + " scheduler: " +
               scheduler.getHostName() + " app:" + app);
       AsyncClient client = schedulerClientPool.borrowClient(scheduler);
-      client.sendSchedulerMessage(app, taskId, status, message,
+      client.sendSchedulerMessage(app, taskId, status, message,hostAddress,
               new sendSchedulerMessageCallback(scheduler, client));
       LOG.debug("finished sending message");
     } catch (IOException e) {
