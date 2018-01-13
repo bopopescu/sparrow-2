@@ -35,6 +35,7 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
+import java.util.Arrays;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -90,8 +91,10 @@ public class SimpleBackend implements BackendService.Iface {
     private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
     private static final ExecutorService executor =
             Executors.newFixedThreadPool(WORKER_THREADS);
+
     //Initialize the Moving Average
     private static Long[] initialMovAvgFrame;
+    private static MovingAverage ma;
 
     /**
      * Keeps track of finished tasks.
@@ -191,17 +194,15 @@ public class SimpleBackend implements BackendService.Iface {
 //          LOG.debug("Aggregate task rate: " + taskRate);
             long completionTime = System.currentTimeMillis() - startTime;
 
-            MovingAverage ma = new MovingAverage(initialMovAvgFrame);
-            ma.add(completionTime);
-            double movingAverage = ma.getValue();
-
-
             LOG.debug("Actual task in " + (taskDuration) + "ms");
             LOG.debug("Task completed in " + completionTime + "ms");
             LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
             LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
+	    //Adds the current completion time
+            ma.add(completionTime);
+	    //Gets the current Moving Average
+            double movingAverage = ma.getValue();
             LOG.debug("Moving Average Value in " + movingAverage + "ms");
-
 
             try {
                 client.tasksFinished(Lists.newArrayList(taskId));
@@ -278,7 +279,9 @@ public class SimpleBackend implements BackendService.Iface {
             } catch (ConfigurationException e) {
             }
         }
-        initialMovAvgFrame = new Long[5];
+        initialMovAvgFrame = new Long[10];
+	Arrays.fill(initialMovAvgFrame, 0L);
+	ma = new MovingAverage(initialMovAvgFrame);
 
         //Use this flag to retrieve the backend and worker speed mapping
         Configuration slavesConfig = new PropertiesConfiguration();
