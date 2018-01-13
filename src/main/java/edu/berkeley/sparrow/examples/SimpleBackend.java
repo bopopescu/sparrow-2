@@ -17,8 +17,8 @@
 package edu.berkeley.sparrow.examples;
 
 import com.google.common.collect.Lists;
-import edu.berkeley.sparrow.daemon.SparrowConf;
 import edu.berkeley.sparrow.daemon.nodemonitor.NodeMonitorThrift;
+import edu.berkeley.sparrow.daemon.util.MovingAverage;
 import edu.berkeley.sparrow.daemon.util.TClients;
 import edu.berkeley.sparrow.daemon.util.TServers;
 import edu.berkeley.sparrow.thrift.BackendService;
@@ -43,7 +43,6 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -91,6 +90,8 @@ public class SimpleBackend implements BackendService.Iface {
     private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
     private static final ExecutorService executor =
             Executors.newFixedThreadPool(WORKER_THREADS);
+    //Initialize the Moving Average
+    private static Long[] initialMovAvgFrame;
 
     /**
      * Keeps track of finished tasks.
@@ -188,18 +189,25 @@ public class SimpleBackend implements BackendService.Iface {
 //                    (System.currentTimeMillis() - startTime);
 
 //          LOG.debug("Aggregate task rate: " + taskRate);
+            long completionTime = System.currentTimeMillis() - startTime;
+
+            MovingAverage ma = new MovingAverage(initialMovAvgFrame);
+            ma.add(completionTime);
+            double movingAverage = ma.getValue();
+
 
             LOG.debug("Actual task in " + (taskDuration) + "ms");
-            LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
+            LOG.debug("Task completed in " + completionTime + "ms");
             LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
             LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
+            LOG.debug("Moving Average Value in " + movingAverage + "ms");
+
 
             try {
                 client.tasksFinished(Lists.newArrayList(taskId));
-
                 ByteBuffer message = ByteBuffer.allocate(8);
-                //Sending this to double confirm response time and waiting time
-                message.putLong(11111);
+                //Send the task Completion Time
+                message.putDouble(movingAverage);
                 client.sendSchedulerMessage(taskId.appId, taskId, 0, ByteBuffer.wrap(message.array()));
             } catch (TException e) {
                 e.printStackTrace();
@@ -270,6 +278,7 @@ public class SimpleBackend implements BackendService.Iface {
             } catch (ConfigurationException e) {
             }
         }
+        initialMovAvgFrame = new Long[5];
 
         //Use this flag to retrieve the backend and worker speed mapping
         Configuration slavesConfig = new PropertiesConfiguration();

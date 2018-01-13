@@ -91,6 +91,8 @@ public class Scheduler {
 
     private boolean usePerTaskSampling;
 
+    private ArrayList<Double> responseFromBackend = new ArrayList<Double>();
+
     /**
      * A callback handler for asynchronous task launches.
      * <p>
@@ -514,7 +516,8 @@ public class Scheduler {
 
     public void sendSchedulerMessage(String app, TFullTaskId taskId,
                                     int status, ByteBuffer message) {
-        LOG.debug(Logging.functionCall(app, taskId, message) + message.getLong()+"<------------zzzzz");
+        LOG.debug(Logging.functionCall(app, taskId, message));
+        LOG.debug("THIS IS SCHEDULER --> " + message.getDouble());
 
         InetSocketAddress frontend = frontendSockets.get(app);
         if (frontend == null) {
