@@ -514,7 +514,8 @@ public class Scheduler {
 
     public void sendSchedulerMessage(String app, TFullTaskId taskId,
                                     int status, ByteBuffer message) {
-        LOG.debug(Logging.functionCall(app, taskId, message) + "<------------zzzzz");
+        LOG.debug(Logging.functionCall(app, taskId, message) + message.getLong()+"<------------zzzzz");
+
         InetSocketAddress frontend = frontendSockets.get(app);
         if (frontend == null) {
             LOG.error("Requested message sent to unregistered app: " + app);

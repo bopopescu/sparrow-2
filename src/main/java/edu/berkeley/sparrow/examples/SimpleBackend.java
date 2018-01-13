@@ -200,7 +200,7 @@ public class SimpleBackend implements BackendService.Iface {
                 ByteBuffer message = ByteBuffer.allocate(8);
                 //Sending this to double confirm response time and waiting time
                 message.putLong(11111);
-                client.sendSchedulerMessage(taskId.appId, taskId, 0, message);
+                client.sendSchedulerMessage(taskId.appId, taskId, 0, ByteBuffer.wrap(message.array());
             } catch (TException e) {
                 e.printStackTrace();
             }
