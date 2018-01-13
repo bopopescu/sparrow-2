@@ -27,6 +27,7 @@ import edu.berkeley.sparrow.daemon.util.ThriftClientPool;
 import edu.berkeley.sparrow.thrift.SchedulerService;
 import edu.berkeley.sparrow.thrift.SchedulerService.AsyncClient;
 import edu.berkeley.sparrow.thrift.SchedulerService.AsyncClient.sendFrontendMessage_call;
+import edu.berkeley.sparrow.thrift.SchedulerService.AsyncClient.sendSchedulerMessage_call;
 import edu.berkeley.sparrow.thrift.TFullTaskId;
 import edu.berkeley.sparrow.thrift.TResourceUsage;
 import edu.berkeley.sparrow.thrift.TResourceVector;
@@ -224,7 +225,7 @@ public class NodeMonitor {
 
 
 private class sendSchedulerMessageCallback implements
-          AsyncMethodCallback<sendFrontendMessage_call> {
+          AsyncMethodCallback<sendSchedulerMessage_call> {
     private InetSocketAddress frontendSocket;
     private AsyncClient client;
     public sendSchedulerMessageCallback(InetSocketAddress socket, AsyncClient client) {
@@ -232,7 +233,7 @@ private class sendSchedulerMessageCallback implements
       this.client = client;
     }
 
-    public void onComplete(sendFrontendMessage_call response) {
+    public void onComplete(sendSchedulerMessage_call response) { //sendSchedulerMessage_call
       try { schedulerClientPool.returnClient(frontendSocket, client); }
       catch (Exception e) { LOG.error(e); }
     }

@@ -141,6 +141,7 @@ public class SimpleBackend implements BackendService.Iface {
         @Override
         public void run() {
             long startTime = System.currentTimeMillis();
+            //TODO change it to sparrow
             NodeMonitorService.Client client = null;
             try {
                 client = TClients.createBlockingNmClient(nodeMonitorHost, nodeMonitorPort);
@@ -195,6 +196,11 @@ public class SimpleBackend implements BackendService.Iface {
 
             try {
                 client.tasksFinished(Lists.newArrayList(taskId));
+
+                ByteBuffer message = ByteBuffer.allocate(8);
+                //Sending this to double confirm response time and waiting time
+                message.putLong(11111);
+                client.sendSchedulerMessage(taskId.appId, taskId, 0, message);
             } catch (TException e) {
                 e.printStackTrace();
             }
