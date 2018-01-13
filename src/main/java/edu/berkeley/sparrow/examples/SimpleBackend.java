@@ -101,6 +101,8 @@ public class SimpleBackend implements BackendService.Iface {
     //Initialize the Moving Average
     private static Long[] initialMovAvgFrame;
     private static MovingAverage ma;
+    // TODO Since I know the median Task Duration of the tasks
+    private static final int MEDIAN_TASK_DURATION= 100;
 
     /**
      * Keeps track of finished tasks.
@@ -208,13 +210,14 @@ public class SimpleBackend implements BackendService.Iface {
             ma.add(completionTime);
 	    //Gets the current Moving Average
             double movingAverage = ma.getValue();
+            double estimatedWorkerSpeed = MEDIAN_TASK_DURATION/movingAverage;
             LOG.debug("Moving Average Value in " + movingAverage + "ms");
 
             try {
                 client.tasksFinished(Lists.newArrayList(taskId));
                 ByteBuffer message = ByteBuffer.allocate(8);
                 //Send the task Completion Time
-                message.putDouble(movingAverage);
+                message.putDouble(estimatedWorkerSpeed);
                 client.sendSchedulerMessage(taskId.appId, taskId, 0, ByteBuffer.wrap(message.array()), thisHost);
             } catch (TException e) {
                 e.printStackTrace();

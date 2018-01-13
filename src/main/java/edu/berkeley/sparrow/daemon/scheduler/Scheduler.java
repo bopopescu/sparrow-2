@@ -517,7 +517,7 @@ public class Scheduler {
     public void sendSchedulerMessage(String app, TFullTaskId taskId,
                                     int status, ByteBuffer message, String hostAddress) {
         LOG.debug(Logging.functionCall(app, taskId, message));
-        LOG.debug("THIS IS SCHEDULER --> " + message.getDouble() + "Host Address: " + hostAddress);
+        LOG.debug("THIS IS SCHEDULER & WS--> " + message.getDouble() + "Host Address: " + hostAddress);
 
         InetSocketAddress frontend = frontendSockets.get(app);
         if (frontend == null) {
