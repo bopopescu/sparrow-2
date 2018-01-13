@@ -40,7 +40,7 @@ public class NodeMonitorService {
 
     public void sendFrontendMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message) throws org.apache.thrift.TException;
 
-    public void sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message) throws org.apache.thrift.TException;
+    public void sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String hostAddress) throws org.apache.thrift.TException;
 
   }
 
@@ -52,7 +52,7 @@ public class NodeMonitorService {
 
     public void sendFrontendMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.sendFrontendMessage_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.sendSchedulerMessage_call> resultHandler) throws org.apache.thrift.TException;
+    public void sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String hostAddress, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.sendSchedulerMessage_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -143,19 +143,20 @@ public class NodeMonitorService {
       return;
     }
 
-    public void sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message) throws org.apache.thrift.TException
+    public void sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String hostAddress) throws org.apache.thrift.TException
     {
-      send_sendSchedulerMessage(app, taskId, status, message);
+      send_sendSchedulerMessage(app, taskId, status, message, hostAddress);
       recv_sendSchedulerMessage();
     }
 
-    public void send_sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message) throws org.apache.thrift.TException
+    public void send_sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String hostAddress) throws org.apache.thrift.TException
     {
       sendSchedulerMessage_args args = new sendSchedulerMessage_args();
       args.setApp(app);
       args.setTaskId(taskId);
       args.setStatus(status);
       args.setMessage(message);
+      args.setHostAddress(hostAddress);
       sendBase("sendSchedulerMessage", args);
     }
 
@@ -292,9 +293,9 @@ public class NodeMonitorService {
       }
     }
 
-    public void sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, org.apache.thrift.async.AsyncMethodCallback<sendSchedulerMessage_call> resultHandler) throws org.apache.thrift.TException {
+    public void sendSchedulerMessage(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String hostAddress, org.apache.thrift.async.AsyncMethodCallback<sendSchedulerMessage_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      sendSchedulerMessage_call method_call = new sendSchedulerMessage_call(app, taskId, status, message, resultHandler, this, ___protocolFactory, ___transport);
+      sendSchedulerMessage_call method_call = new sendSchedulerMessage_call(app, taskId, status, message, hostAddress, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -304,12 +305,14 @@ public class NodeMonitorService {
       private edu.berkeley.sparrow.thrift.TFullTaskId taskId;
       private int status;
       private ByteBuffer message;
-      public sendSchedulerMessage_call(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, org.apache.thrift.async.AsyncMethodCallback<sendSchedulerMessage_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private String hostAddress;
+      public sendSchedulerMessage_call(String app, edu.berkeley.sparrow.thrift.TFullTaskId taskId, int status, ByteBuffer message, String hostAddress, org.apache.thrift.async.AsyncMethodCallback<sendSchedulerMessage_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.app = app;
         this.taskId = taskId;
         this.status = status;
         this.message = message;
+        this.hostAddress = hostAddress;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -319,6 +322,7 @@ public class NodeMonitorService {
         args.setTaskId(taskId);
         args.setStatus(status);
         args.setMessage(message);
+        args.setHostAddress(hostAddress);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -429,7 +433,7 @@ public class NodeMonitorService {
 
       public sendSchedulerMessage_result getResult(I iface, sendSchedulerMessage_args args) throws org.apache.thrift.TException {
         sendSchedulerMessage_result result = new sendSchedulerMessage_result();
-        iface.sendSchedulerMessage(args.app, args.taskId, args.status, args.message);
+        iface.sendSchedulerMessage(args.app, args.taskId, args.status, args.message, args.hostAddress);
         return result;
       }
     }
@@ -2813,6 +2817,7 @@ public class NodeMonitorService {
     private static final org.apache.thrift.protocol.TField TASK_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("taskId", org.apache.thrift.protocol.TType.STRUCT, (short)2);
     private static final org.apache.thrift.protocol.TField STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("status", org.apache.thrift.protocol.TType.I32, (short)3);
     private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)4);
+    private static final org.apache.thrift.protocol.TField HOST_ADDRESS_FIELD_DESC = new org.apache.thrift.protocol.TField("hostAddress", org.apache.thrift.protocol.TType.STRING, (short)5);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -2824,13 +2829,15 @@ public class NodeMonitorService {
     public edu.berkeley.sparrow.thrift.TFullTaskId taskId; // required
     public int status; // required
     public ByteBuffer message; // required
+    public String hostAddress; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       APP((short)1, "app"),
       TASK_ID((short)2, "taskId"),
       STATUS((short)3, "status"),
-      MESSAGE((short)4, "message");
+      MESSAGE((short)4, "message"),
+      HOST_ADDRESS((short)5, "hostAddress");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -2853,6 +2860,8 @@ public class NodeMonitorService {
             return STATUS;
           case 4: // MESSAGE
             return MESSAGE;
+          case 5: // HOST_ADDRESS
+            return HOST_ADDRESS;
           default:
             return null;
         }
@@ -2906,6 +2915,8 @@ public class NodeMonitorService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , true)));
+      tmpMap.put(_Fields.HOST_ADDRESS, new org.apache.thrift.meta_data.FieldMetaData("hostAddress", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(sendSchedulerMessage_args.class, metaDataMap);
     }
@@ -2917,7 +2928,8 @@ public class NodeMonitorService {
       String app,
       edu.berkeley.sparrow.thrift.TFullTaskId taskId,
       int status,
-      ByteBuffer message)
+      ByteBuffer message,
+      String hostAddress)
     {
       this();
       this.app = app;
@@ -2925,6 +2937,7 @@ public class NodeMonitorService {
       this.status = status;
       setStatusIsSet(true);
       this.message = message;
+      this.hostAddress = hostAddress;
     }
 
     /**
@@ -2943,6 +2956,9 @@ public class NodeMonitorService {
         this.message = org.apache.thrift.TBaseHelper.copyBinary(other.message);
 ;
       }
+      if (other.isSetHostAddress()) {
+        this.hostAddress = other.hostAddress;
+      }
     }
 
     public sendSchedulerMessage_args deepCopy() {
@@ -2955,6 +2971,7 @@ public class NodeMonitorService {
       setStatusIsSet(false);
       this.status = 0;
       this.message = null;
+      this.hostAddress = null;
     }
 
     public String getApp() {
@@ -3062,6 +3079,30 @@ public class NodeMonitorService {
       }
     }
 
+    public String getHostAddress() {
+      return this.hostAddress;
+    }
+
+    public sendSchedulerMessage_args setHostAddress(String hostAddress) {
+      this.hostAddress = hostAddress;
+      return this;
+    }
+
+    public void unsetHostAddress() {
+      this.hostAddress = null;
+    }
+
+    /** Returns true if field hostAddress is set (has been assigned a value) and false otherwise */
+    public boolean isSetHostAddress() {
+      return this.hostAddress != null;
+    }
+
+    public void setHostAddressIsSet(boolean value) {
+      if (!value) {
+        this.hostAddress = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case APP:
@@ -3096,6 +3137,14 @@ public class NodeMonitorService {
         }
         break;
 
+      case HOST_ADDRESS:
+        if (value == null) {
+          unsetHostAddress();
+        } else {
+          setHostAddress((String)value);
+        }
+        break;
+
       }
     }
 
@@ -3112,6 +3161,9 @@ public class NodeMonitorService {
 
       case MESSAGE:
         return getMessage();
+
+      case HOST_ADDRESS:
+        return getHostAddress();
 
       }
       throw new IllegalStateException();
@@ -3132,6 +3184,8 @@ public class NodeMonitorService {
         return isSetStatus();
       case MESSAGE:
         return isSetMessage();
+      case HOST_ADDRESS:
+        return isSetHostAddress();
       }
       throw new IllegalStateException();
     }
@@ -3182,6 +3236,15 @@ public class NodeMonitorService {
         if (!(this_present_message && that_present_message))
           return false;
         if (!this.message.equals(that.message))
+          return false;
+      }
+
+      boolean this_present_hostAddress = true && this.isSetHostAddress();
+      boolean that_present_hostAddress = true && that.isSetHostAddress();
+      if (this_present_hostAddress || that_present_hostAddress) {
+        if (!(this_present_hostAddress && that_present_hostAddress))
+          return false;
+        if (!this.hostAddress.equals(that.hostAddress))
           return false;
       }
 
@@ -3241,6 +3304,16 @@ public class NodeMonitorService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetHostAddress()).compareTo(typedOther.isSetHostAddress());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetHostAddress()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.hostAddress, typedOther.hostAddress);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -3286,6 +3359,14 @@ public class NodeMonitorService {
         sb.append("null");
       } else {
         org.apache.thrift.TBaseHelper.toString(this.message, sb);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("hostAddress:");
+      if (this.hostAddress == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.hostAddress);
       }
       first = false;
       sb.append(")");
@@ -3369,6 +3450,14 @@ public class NodeMonitorService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 5: // HOST_ADDRESS
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+                struct.hostAddress = iprot.readString();
+                struct.setHostAddressIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -3402,6 +3491,11 @@ public class NodeMonitorService {
           oprot.writeBinary(struct.message);
           oprot.writeFieldEnd();
         }
+        if (struct.hostAddress != null) {
+          oprot.writeFieldBegin(HOST_ADDRESS_FIELD_DESC);
+          oprot.writeString(struct.hostAddress);
+          oprot.writeFieldEnd();
+        }
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -3432,7 +3526,10 @@ public class NodeMonitorService {
         if (struct.isSetMessage()) {
           optionals.set(3);
         }
-        oprot.writeBitSet(optionals, 4);
+        if (struct.isSetHostAddress()) {
+          optionals.set(4);
+        }
+        oprot.writeBitSet(optionals, 5);
         if (struct.isSetApp()) {
           oprot.writeString(struct.app);
         }
@@ -3445,12 +3542,15 @@ public class NodeMonitorService {
         if (struct.isSetMessage()) {
           oprot.writeBinary(struct.message);
         }
+        if (struct.isSetHostAddress()) {
+          oprot.writeString(struct.hostAddress);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, sendSchedulerMessage_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(4);
+        BitSet incoming = iprot.readBitSet(5);
         if (incoming.get(0)) {
           struct.app = iprot.readString();
           struct.setAppIsSet(true);
@@ -3467,6 +3567,10 @@ public class NodeMonitorService {
         if (incoming.get(3)) {
           struct.message = iprot.readBinary();
           struct.setMessageIsSet(true);
+        }
+        if (incoming.get(4)) {
+          struct.hostAddress = iprot.readString();
+          struct.setHostAddressIsSet(true);
         }
       }
     }
