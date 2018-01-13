@@ -80,6 +80,11 @@ public class SimpleBackend implements BackendService.Iface {
     private static int nodeMonitorPort;
     private static String nodeMonitorHost = "localhost";
 
+    private static String SLIDING_WINDOW= "moving_average_size";
+    private static int DEFAULT_SLIDING_WINDOW = 5;
+
+
+
     private static String SLAVES = "slaves";
     private static String DEFAULT_NO_SLAVES = "slaves";
 
@@ -87,6 +92,7 @@ public class SimpleBackend implements BackendService.Iface {
 
     private static Client client;
     private static String workSpeed;
+    private static int slidingWindow;
 
     private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
     private static final ExecutorService executor =
@@ -271,7 +277,6 @@ public class SimpleBackend implements BackendService.Iface {
 
         Configuration conf = new PropertiesConfiguration();
 
-
         if (options.has("c")) {
             String configFile = (String) options.valueOf("c");
             try {
@@ -279,9 +284,11 @@ public class SimpleBackend implements BackendService.Iface {
             } catch (ConfigurationException e) {
             }
         }
-        initialMovAvgFrame = new Long[10];
-	Arrays.fill(initialMovAvgFrame, 0L);
-	ma = new MovingAverage(initialMovAvgFrame);
+        slidingWindow = conf.getInt(SLIDING_WINDOW,DEFAULT_SLIDING_WINDOW);
+        initialMovAvgFrame = new Long[slidingWindow];
+    	Arrays.fill(initialMovAvgFrame, 0L);
+    	LOG.debug("Taking Sliding Window of size : " + slidingWindow);
+	    ma = new MovingAverage(initialMovAvgFrame);
 
         //Use this flag to retrieve the backend and worker speed mapping
         Configuration slavesConfig = new PropertiesConfiguration();
