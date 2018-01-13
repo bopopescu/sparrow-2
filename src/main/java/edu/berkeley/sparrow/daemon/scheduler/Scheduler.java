@@ -35,6 +35,9 @@ public class Scheduler {
     private final static Logger LOG = Logger.getLogger(Scheduler.class);
     private final static Logger AUDIT_LOG = Logging.getAuditLogger(Scheduler.class);
 
+    /** Estimated Worker Speed HashMap **/ //TODO are we continuously updating the map???
+    public static Map<String, String> estimatedWorkerSpeedMap = new HashMap<String, String>();
+
     /**
      * Used to uniquely identify requests arriving at this scheduler.
      */
@@ -419,10 +422,10 @@ public class Scheduler {
 
         if (constrained) {
             LOG.debug("CONSTRAINED");
-            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap);
+            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap, estimatedWorkerSpeedMap.toString());
         } else {
             LOG.debug("UNCONSTRAINED");
-            return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap);
+            return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap, estimatedWorkerSpeedMap.toString());
 
         }
     }
@@ -517,8 +520,10 @@ public class Scheduler {
     public void sendSchedulerMessage(String app, TFullTaskId taskId,
                                     int status, ByteBuffer message, String hostAddress) {
         LOG.debug(Logging.functionCall(app, taskId, message));
-        LOG.debug("THIS IS SCHEDULER & WS--> " + message.getDouble() + "Host Address: " + hostAddress);
-
+        double workerSpeed = message.getDouble();
+        LOG.debug("THIS IS SCHEDULER where WS:--> " + workerSpeed + "Host Address: " + hostAddress);
+        estimatedWorkerSpeedMap.put(hostAddress, String.valueOf(workerSpeed));
+        LOG.debug("THIS IS SCHEDULER where Map--> " + estimatedWorkerSpeedMap);
         InetSocketAddress frontend = frontendSockets.get(app);
         if (frontend == null) {
             LOG.error("Requested message sent to unregistered app: " + app);
@@ -526,7 +531,7 @@ public class Scheduler {
         }
 //        try {
 //            AsyncClient client = frontendClientPool.borrowClient(frontend);
-//            client.frontendMessage(taskId, status, message,
+//            client.frontendMessage(taskId, status, message, hostAddress
 //                    new sendFrontendMessageCallback(frontend, client));
 //        } catch (IOException e) {
 //            LOG.error("Error launching message on frontend: " + app, e);

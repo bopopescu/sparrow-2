@@ -170,12 +170,14 @@ public class ProbingTaskPlacer implements TaskPlacer {
     @Override
     public Collection<TaskPlacer.TaskPlacementResponse> placeTasks(String appId,
                                                                    String requestId, Collection<InetSocketAddress> nodes,
-                                                                   Collection<TTaskSpec> tasks, String workerSpeedMap)
+                                                                   Collection<TTaskSpec> tasks, String workerSpeedMap, String estimatedWorkerSpeedMap)
             throws IOException {
         LOG.debug(Logging.functionCall(appId, nodes, tasks));
+        LOG.debug("Real: " + workerSpeedMap + "VS: Estimated:  " + estimatedWorkerSpeedMap);
+
 
         if (probeRatio < 1.0) {
-            return randomPlacer.placeTasks(appId, requestId, nodes, tasks, workerSpeedMap);
+            return randomPlacer.placeTasks(appId, requestId, nodes, tasks, workerSpeedMap, estimatedWorkerSpeedMap);
         }
 
         Map<InetSocketAddress, TResourceUsage> loads = Maps.newConcurrentMap();
