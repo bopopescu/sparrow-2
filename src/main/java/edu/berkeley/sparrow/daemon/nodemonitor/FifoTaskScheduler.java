@@ -47,12 +47,14 @@ public class FifoTaskScheduler extends TaskScheduler {
     activeTasks.decrementAndGet();
     if (!tasks.isEmpty()) {
       makeTaskRunnable(tasks.poll());
+      activeTasks.incrementAndGet();
     } else {
       if (!tasksFake.isEmpty()) {
         makeTaskRunnable(tasksFake.poll());
+        activeTasks.incrementAndGet();
       }
     }
-    activeTasks.incrementAndGet();
+
   }
 
   @Override
