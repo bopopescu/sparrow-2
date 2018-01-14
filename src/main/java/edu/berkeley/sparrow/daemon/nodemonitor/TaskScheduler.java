@@ -35,7 +35,6 @@ public abstract class TaskScheduler {
     private final static Logger AUDIT_LOG = Logging.getAuditLogger(
             TaskScheduler.class);
     private String ipAddress;
-    private boolean isFake;
 
     class TaskDescription {
         ByteBuffer message;
@@ -124,30 +123,22 @@ public abstract class TaskScheduler {
         }
     }
 
-    protected void makeTaskRunnable(TaskDescription task) {
+    protected void makeTaskRunnable(TaskDescription task, boolean isFake) {
         runnableTaskIds.add(task.taskId);
         AUDIT_LOG.info(
                 Logging.auditEventString("nodemonitor_task_runnable", ipAddress,
                         task.taskId.requestId, task.taskId.taskId));
         try {
-            runnableTaskQueue.put(task);
+            if(!isFake) {
+                runnableTaskQueue.put(task);
+            } else {
+                fakeRunnableTaskQueue.put(task);
+            }
         } catch (InterruptedException e) {
             LOG.fatal(e);
         }
     }
 
-
-    protected void makeFakeTaskRunnable(TaskDescription task) {
-        runnableTaskIds.add(task.taskId);
-        AUDIT_LOG.info(
-                Logging.auditEventString("nodemonitor_task_runnable", ipAddress,
-                        task.taskId.requestId, task.taskId.taskId));
-        try {
-            fakeRunnableTaskQueue.put(task);
-        } catch (InterruptedException e) {
-            LOG.fatal(e);
-        }
-    }
 
     protected void taskCompleted(TFullTaskId taskId) {
         AUDIT_LOG.info(

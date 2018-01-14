@@ -29,11 +29,7 @@ public class FifoTaskScheduler extends TaskScheduler {
     if (activeTasks.get() < maxActiveTasks) {
       //Makes the input task runnable. Making Fake task runnable only if real  task isn empty and fake task is not.
       // since it's already submitted, we need to make it runnable without any logic? Check
-      if (!isFake) {
-        makeTaskRunnable(task);
-      } else {
-        makeFakeTaskRunnable(task);
-      }
+      makeTaskRunnable(task, isFake);
       activeTasks.incrementAndGet();
     } else {
       try {
@@ -52,10 +48,10 @@ public class FifoTaskScheduler extends TaskScheduler {
   protected void handleTaskCompleted(TFullTaskId taskId) {
     activeTasks.decrementAndGet();
     if (!tasks.isEmpty()) {
-      makeTaskRunnable(tasks.poll());
+      makeTaskRunnable(tasks.poll(),false); //Since the task is polled from the nonFake tasks Queue passing in false
     }
     if(tasks.isEmpty() && !fakeTasks.isEmpty()){
-      makeTaskRunnable(fakeTasks.poll());
+      makeTaskRunnable(fakeTasks.poll(), true); //since it's polled from fake task queue, passing true
     }
     activeTasks.incrementAndGet();
   }
