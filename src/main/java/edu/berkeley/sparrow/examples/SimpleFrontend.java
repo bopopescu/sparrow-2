@@ -282,13 +282,48 @@ public class SimpleFrontend implements FrontendService.Iface {
 
             JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
             ScheduledThreadPoolExecutor taskLauncher = new ScheduledThreadPoolExecutor(1);
+
             ScheduledFuture<?> sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
 
+
+	     List<Integer> arrivalList = Arrays.asList(100,300,400,500,1000,1500,2000);
+            int arrivalCount = arrivalList.size();
+            int i = 0;
+            long startTime = System.currentTimeMillis();
+            int count = 0;
+
+            LOG.debug("sleeping");
+            boolean isCanceled = false;
+            boolean restarted = false;
+            while (count < arrivalCount) {
+
+                Thread.sleep(100);
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                if (elapsedTime > i *30*1000 && isCanceled == false) {
+                    LOG.debug("Cancelling <--");
+                    sf.cancel(true);
+                    isCanceled = true;
+                    restarted = false;
+                    ++i;
+                }
+                if (elapsedTime > i * 30 * 1000 && restarted == false) {
+                    LOG.debug("Restarting <--");
+                    sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalList.get(count), TimeUnit.MILLISECONDS);
+                    restarted = true;
+                    isCanceled = false;
+                    ++i;
+		    ++count;
+                }
+            }
+
+
+/*
 
             long startTime = System.currentTimeMillis();
 
             LOG.debug("sleeping");
-            boolean isCanceled = false;
+           
+	    boolean isCanceled = false;
             boolean restarted = false;
             while (System.currentTimeMillis() < startTime + experimentDurationS * 1000) {
 
@@ -304,7 +339,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                     sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis*2, TimeUnit.MILLISECONDS);
                     restarted = true;
                 }
-            }
+            }*/
             taskLauncher.shutdown();
         } catch (Exception e) {
             LOG.error("Fatal exception", e);
