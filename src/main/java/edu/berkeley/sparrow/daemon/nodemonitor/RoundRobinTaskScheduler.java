@@ -32,7 +32,7 @@ public class RoundRobinTaskScheduler extends TaskScheduler {
     if (TResources.isLessThanOrEqualTo(task.estimatedResources, getFreeResources())) {
       LOG.info("Task: " + task.taskId + " instantly runnable. " 
         + task.estimatedResources + "<=" + getFreeResources());
-      makeTaskRunnable(task);
+      makeTaskRunnable(task, false); //TODO Change this if we're every using it.
     } else {
       addTaskToAppQueue(appId, task);
     }
@@ -80,7 +80,7 @@ public class RoundRobinTaskScheduler extends TaskScheduler {
         }
         else {
           LOG.info("Task: " + nextTask.taskId + " now runnable");
-          makeTaskRunnable(nextTask);
+          makeTaskRunnable(nextTask, false);//Change this if we use it
           removeTaskFromAppQueue(app, nextTask);
           currentIndex = currentIndex + i + 1;
           return;

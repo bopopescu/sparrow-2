@@ -18,7 +18,7 @@ public class NoQueueTaskScheduler extends TaskScheduler {
   @Override
   void handleSubmitTask(TaskDescription task, String appId, boolean isFake) {
     // Make this task instantly runnable
-    makeTaskRunnable(task);
+    makeTaskRunnable(task,false);
   }
 
   @Override
