@@ -28,7 +28,7 @@ public class RoundRobinTaskScheduler extends TaskScheduler {
                                 // the number of apps.
 
   @Override
-  void handleSubmitTask(TaskDescription task, String appId) {
+  void handleSubmitTask(TaskDescription task, String appId, boolean isFake) {
     if (TResources.isLessThanOrEqualTo(task.estimatedResources, getFreeResources())) {
       LOG.info("Task: " + task.taskId + " instantly runnable. " 
         + task.estimatedResources + "<=" + getFreeResources());

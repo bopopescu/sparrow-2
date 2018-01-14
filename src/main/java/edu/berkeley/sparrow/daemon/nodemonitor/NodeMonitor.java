@@ -145,7 +145,7 @@ public class NodeMonitor {
    * @param schedulerAddress
    */
   public boolean launchTask(ByteBuffer message, TFullTaskId taskId,
-      TUserGroupInfo user, TResourceVector estimatedResources)
+      TUserGroupInfo user, TResourceVector estimatedResources, boolean isFake)
           throws TException {
     LOG.debug(Logging.functionCall(message, taskId, user, estimatedResources));
 
@@ -169,7 +169,7 @@ public class NodeMonitor {
       return false;
     }
     scheduler.submitTask(scheduler.new TaskDescription(taskId, message,
-        estimatedResources, user, socket), taskId.appId);
+        estimatedResources, user, socket), taskId.appId, isFake);
     return true;
   }
 

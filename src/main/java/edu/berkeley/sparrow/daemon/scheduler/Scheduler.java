@@ -241,7 +241,7 @@ public class Scheduler {
             id.requestId = requestId;
             id.taskId = taskId;
             client.launchTask(response.getTaskSpec().message, id,
-                    req.getUser(), response.getTaskSpec().getEstimatedResources(),
+                    req.getUser(), response.getTaskSpec().getEstimatedResources(), isFake,
                     new TaskLaunchCallback(latch, client, response.getNodeAddr()));
         }
         // NOTE: Currently we just return rather than waiting for all tasks to launch

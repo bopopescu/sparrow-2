@@ -24,7 +24,7 @@ public class FifoTaskScheduler extends TaskScheduler {
   }
   
   @Override
-  synchronized void handleSubmitTask(TaskDescription task, String appId) {
+  synchronized void handleSubmitTask(TaskDescription task, String appId, boolean isFake) {
     if (activeTasks.get() < maxActiveTasks) {
       makeTaskRunnable(task);
       activeTasks.incrementAndGet();

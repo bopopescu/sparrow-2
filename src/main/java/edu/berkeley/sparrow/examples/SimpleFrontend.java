@@ -315,22 +315,22 @@ public class SimpleFrontend implements FrontendService.Iface {
             while (count < arrivalCount) {
 
                 Thread.sleep(100);
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                if (elapsedTime > i * 30 * 1000 && isCanceled == false) {
-                    LOG.debug("Cancelling <--");
-                    sf.cancel(true);
-                    isCanceled = true;
-                    restarted = false;
-                    ++i;
-                }
-                if (elapsedTime > i * 30 * 1000 && restarted == false) {
-                    LOG.debug("Restarting <--");
-                    sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalList.get(count), TimeUnit.MILLISECONDS);
-                    restarted = true;
-                    isCanceled = false;
-                    ++i;
-                    ++count;
-                }
+//                long elapsedTime = System.currentTimeMillis() - startTime;
+//                if (elapsedTime > i * 30 * 1000 && isCanceled == false) {
+//                    LOG.debug("Cancelling <--");
+//                    sf.cancel(true);
+//                    isCanceled = true;
+//                    restarted = false;
+//                    ++i;
+//                }
+//                if (elapsedTime > i * 30 * 1000 && restarted == false) {
+//                    LOG.debug("Restarting <--");
+//                    sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalList.get(count), TimeUnit.MILLISECONDS);
+//                    restarted = true;
+//                    isCanceled = false;
+//                    ++i;
+//                    ++count;
+//                }
             }
 
 

@@ -15,7 +15,7 @@ import edu.berkeley.sparrow.thrift.TResourceUsage;
 public class NoQueueTaskScheduler extends TaskScheduler {
 
   @Override
-  void handleSubmitTask(TaskDescription task, String appId) {
+  void handleSubmitTask(TaskDescription task, String appId, boolean isFake) {
     // Make this task instantly runnable
     makeTaskRunnable(task);
   }
