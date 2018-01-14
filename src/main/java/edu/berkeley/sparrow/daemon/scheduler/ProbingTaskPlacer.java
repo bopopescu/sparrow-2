@@ -45,23 +45,20 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
     //Test case in sparrow/src/test/java/edu/berkeley/sparrow/daemon/scheduler/TestPSS.java
     //Gets index  where cdf allows retrieving index having higher workerspeed with higher probability
-    public static int getIndexFromPSS(double[] cdf_worker_speed, ArrayList<Integer> workerIndex){
+    public static int getIndexFromPSS(double[] cdf_worker_speed, ArrayList<Integer> workerIndex) {
         UniformRealDistribution uniformRealDistribution = new UniformRealDistribution();
-        int workerIndexReservation= java.util.Arrays.binarySearch(cdf_worker_speed, uniformRealDistribution.sample());
-        if(workerIndexReservation == -1){
-            workerIndexReservation = 0;
-        } else{
-            workerIndexReservation = Math.abs(workerIndexReservation) -1;
+        int workerIndexReservation = java.util.Arrays.binarySearch(cdf_worker_speed, uniformRealDistribution.sample());
+        if (workerIndexReservation < 0) {
+            workerIndexReservation = Math.abs(workerIndexReservation) - 1;
+        } else {
+            workerIndexReservation = Math.abs(workerIndexReservation);
         }
         //This doesn't allow probing the same nodemonitor twice
-        if(workerIndex.contains(workerIndexReservation)){
-             workerIndexReservation = getIndexFromPSS(cdf_worker_speed, workerIndex);
-           }
+        if (workerIndex.contains(workerIndexReservation)) {
+            workerIndexReservation = getIndexFromPSS(cdf_worker_speed, workerIndex);
+        }
         return workerIndexReservation;
     }
-
-
-
 
 
     //Test case in sparrow/src/test/java/edu/berkeley/sparrow/daemon/scheduler/TestPSS.java
@@ -69,15 +66,15 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
         //Gets the CDF of workers Speed
         double sum = 0;
-        for(double d : workerSpeedList)
+        for (double d : workerSpeedList)
             sum += d;
 
         double[] cdf_worker_speed = new double[workerSpeedList.size()];
         double cdf = 0;
         int j = 0;
-        for (double d: workerSpeedList){
-            d = d/sum;
-            cdf= cdf+ d;
+        for (double d : workerSpeedList) {
+            d = d / sum;
+            cdf = cdf + d;
             cdf_worker_speed[j] = cdf;
             j++;
         }
@@ -170,18 +167,10 @@ public class ProbingTaskPlacer implements TaskPlacer {
     @Override
     public Collection<TaskPlacer.TaskPlacementResponse> placeTasks(String appId,
                                                                    String requestId, Collection<InetSocketAddress> nodes,
-                                                                   Collection<TTaskSpec> tasks, String workerSpeedMap, String estimatedWorkerSpeedMap)
+                                                                   Collection<TTaskSpec> tasks, String workerSpeedMap, HashMap<String, String> estimatedWorkerSpeedMap)
             throws IOException {
         LOG.debug(Logging.functionCall(appId, nodes, tasks));
         LOG.debug("Real: " + workerSpeedMap + "VS: Estimated:  " + estimatedWorkerSpeedMap);
-
-
-        String workerMapBeingUsed = "";
-        if (estimatedWorkerSpeedMap.equalsIgnoreCase("{}"))
-            workerMapBeingUsed  = workerSpeedMap;
-        else
-            workerMapBeingUsed = estimatedWorkerSpeedMap;
-
 
         if (probeRatio < 1.0) {
             return randomPlacer.placeTasks(appId, requestId, nodes, tasks, workerSpeedMap, estimatedWorkerSpeedMap);
@@ -194,49 +183,31 @@ public class ProbingTaskPlacer implements TaskPlacer {
         // per-task information to decide when to return.
         //TODO This assumes that we have more workers than probes
         int probesToLaunch = SparrowConf.DEFAULT_SAMPLE_RATIO_CONSTRAINED;//Math.min(probesToLaunch, nodes.size());
-
         LOG.debug("Launching " + probesToLaunch + " probes");
-
         // Right now we wait for all probes to return, in the future we might add a timeout
         CountDownLatch latch = new CountDownLatch(probesToLaunch);
-
         //All the available nodes
         List<InetSocketAddress> nodeList = Lists.newArrayList(nodes);
-
+        //We need to pass the arrayList to calculate PSS
+        ArrayList<Double> workerSpeedList = new ArrayList<Double>();
+        ArrayList<String> backendList = new ArrayList<String>();
         //This is supposed to be the nodelist for specified no. of probes
         List<InetSocketAddress> subNodeList = new ArrayList<InetSocketAddress>();
+        HashMap<InetSocketAddress, String> nodeListMap = new HashMap<InetSocketAddress, String>();
 
-        //Sorted nodeList based; combining the one received from Map and available as InetSocketAddress object
-        List<InetSocketAddress> newNodeList = Lists.newArrayList();
-        //TODO Bettter structure sorting, use of variables :  ZM Jan 12
-
-
-        //Worker Speed List
-        ArrayList<Double> workerSpeedList = new ArrayList<Double>();
-
-
-        //Extracting sorted nodes and worker speeds
-        workerMapBeingUsed = workerSpeedMap.substring(1, workerMapBeingUsed.length() - 1);           //remove curly brackets
-        String[] keyValuePairs = workerSpeedMap.split(",");              //split the string to create key-value pairs
-        ArrayList<String> backendList = new ArrayList<String>();
-
-        for (String pair : keyValuePairs)                        //iterate over the pairs
-        {
-            String[] entry = pair.split("=");                   //split the pairs to get key and value
-            backendList.add((String) entry[0].trim());
-            workerSpeedList.add(Double.valueOf((String) entry[1].trim())); //this
+        //NodeList Map is sorted based on nodeList and it has worker speed from  estimatedWorker Speed
+        for (InetSocketAddress node : nodeList) {
+            nodeListMap.put(node, estimatedWorkerSpeedMap.get(node.getAddress().getHostAddress()));
         }
 
-        //Sorting to match the index
-        for (String bNode : backendList) {
-            for (InetSocketAddress node : nodeList) {
-                if (node.getAddress().getHostAddress().equalsIgnoreCase(bNode)) {
-                    newNodeList.add(node);
-                }
-            }
+        for (Map.Entry<InetSocketAddress, String> entry : nodeListMap.entrySet()) {
+            backendList.add(entry.getKey().getAddress().getHostAddress().toString());
+            workerSpeedList.add(Double.valueOf(entry.getValue().toString()));
         }
 
-        double[] cdf_worker_speed = new double[newNodeList.size()];
+        LOG.debug("Matches Indices of Estimated Vs NodeList" + estimatedWorkerSpeedMap.toString() + ":" + nodeListMap.toString());
+
+        double[] cdf_worker_speed = null;
 
         try {
             //gets cdf of worker speed in the range of 0 to 1
@@ -246,9 +217,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
         }
 
         //This was used to make sure probes aren't sent to same worker
-        //TODO need to verify if we are allowing this
         ArrayList<Integer> workerIndex = new ArrayList<Integer>();
-
         if (nodes.size() > probesToLaunch) {
             for (int i = 0; i < probesToLaunch; i++) {
                 int workerIndexReservation = getIndexFromPSS(cdf_worker_speed, workerIndex);
@@ -259,16 +228,10 @@ public class ProbingTaskPlacer implements TaskPlacer {
             //Nodelist contains the list of workers and workerIndex contains indices from that node list
             //So this comparision should make sense but using hashmap would be a better idea.
             for (int j = 0; j < workerIndex.size(); j++) {
-                subNodeList.add(newNodeList.get(workerIndex.get(j)));
+                subNodeList.add(nodeList.get(workerIndex.get(j)));
             }
             nodeList = subNodeList;
         }
-
-
-        // Get a random subset of nodes by shuffling list
-//        Collections.shuffle(nodeList);
-//        nodeList = nodeList.subList(0, probesToLaunch);
-
 
         for (InetSocketAddress node : nodeList) {
             try {

@@ -36,7 +36,7 @@ public class Scheduler {
     private final static Logger AUDIT_LOG = Logging.getAuditLogger(Scheduler.class);
 
     /** Estimated Worker Speed HashMap **/ //TODO are we continuously updating the map???
-    public static Map<String, String> estimatedWorkerSpeedMap = new HashMap<String, String>();
+    public static HashMap<String, String> estimatedWorkerSpeedMap = new HashMap<String, String>();
 
     /**
      * Used to uniquely identify requests arriving at this scheduler.
@@ -423,10 +423,10 @@ public class Scheduler {
         if (constrained) {
             LOG.debug("CONSTRAINED");
             //TODO Change to hashmap
-            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap, estimatedWorkerSpeedMap.toString()); // DOn't pass too much string
+            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap, estimatedWorkerSpeedMap); // DOn't pass too much string
         } else {
             LOG.debug("UNCONSTRAINED");
-            return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap, estimatedWorkerSpeedMap.toString());
+            return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap, estimatedWorkerSpeedMap);
 
         }
     }
