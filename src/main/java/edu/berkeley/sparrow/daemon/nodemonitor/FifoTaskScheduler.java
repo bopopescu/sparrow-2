@@ -18,6 +18,7 @@ public class FifoTaskScheduler extends TaskScheduler {
   public int maxActiveTasks = 1;
   public AtomicInteger activeTasks = new AtomicInteger(0);
   public LinkedBlockingQueue<TaskDescription> tasks = new LinkedBlockingQueue<TaskDescription>();
+  public LinkedBlockingQueue<TaskDescription> tasksFake = new LinkedBlockingQueue<TaskDescription>();
 
   public void setMaxActiveTasks(int max) {
     this.maxActiveTasks = max;
@@ -30,7 +31,11 @@ public class FifoTaskScheduler extends TaskScheduler {
       activeTasks.incrementAndGet();
     } else {
       try {
-        tasks.put(task);
+        if (isFake) {
+          tasksFake.put(task);
+        } else {
+          tasks.put(task);
+        }
       } catch (InterruptedException e) {
         LOG.fatal(e);
       }
@@ -42,8 +47,12 @@ public class FifoTaskScheduler extends TaskScheduler {
     activeTasks.decrementAndGet();
     if (!tasks.isEmpty()) {
       makeTaskRunnable(tasks.poll());
-      activeTasks.incrementAndGet();
+    } else {
+      if (!tasksFake.isEmpty()) {
+        makeTaskRunnable(tasksFake.poll());
+      }
     }
+    activeTasks.incrementAndGet();
   }
 
   @Override
@@ -52,6 +61,7 @@ public class FifoTaskScheduler extends TaskScheduler {
     out.resources = TResources.subtract(capacity, getFreeResources());
     // We use one shared queue for all apps here
     out.queueLength = tasks.size();
+    out.fakeQueueLength = tasksFake.size();
     return out;
   }
 
