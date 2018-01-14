@@ -14,12 +14,17 @@ import edu.berkeley.sparrow.thrift.TResourceUsage;
  */
 public class NoQueueTaskScheduler extends TaskScheduler {
 
+
   @Override
-  void handleSubmitTask(TaskDescription task, String appId) {
+  void handleSubmitTask(TaskDescription task, String appId, boolean isFake) {
     // Make this task instantly runnable
     makeTaskRunnable(task);
   }
 
+  @Override
+  protected void handleTaskCompleted(TFullTaskId taskId) {
+
+  }
 
   @Override
   TResourceUsage getResourceUsage(String appId) {
@@ -29,12 +34,6 @@ public class NoQueueTaskScheduler extends TaskScheduler {
     // We never queue
     out.queueLength = 0;
     return out;
-  }
-
-
-  @Override
-  protected void handleTaskCompleted(TFullTaskId taskId) {
-    // Do nothing
   }
 
 }

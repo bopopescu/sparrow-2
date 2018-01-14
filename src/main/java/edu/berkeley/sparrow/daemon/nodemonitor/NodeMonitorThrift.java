@@ -89,8 +89,8 @@ public class NodeMonitorThrift implements NodeMonitorService.Iface,
 
   @Override
   public boolean launchTask(ByteBuffer message, TFullTaskId taskId,
-      TUserGroupInfo user, TResourceVector estimatedResources) throws TException {
-    return nodeMonitor.launchTask(message, taskId, user, estimatedResources);
+      TUserGroupInfo user, TResourceVector estimatedResources, boolean isFake) throws TException {
+    return nodeMonitor.launchTask(message, taskId, user, estimatedResources, isFake);
   }
 
   @Override

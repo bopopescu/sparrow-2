@@ -18,19 +18,30 @@ public class FifoTaskScheduler extends TaskScheduler {
   public int maxActiveTasks = 1;
   public AtomicInteger activeTasks = new AtomicInteger(0);
   public LinkedBlockingQueue<TaskDescription> tasks = new LinkedBlockingQueue<TaskDescription>();
+  public LinkedBlockingQueue<TaskDescription> fakeTasks = new LinkedBlockingQueue<TaskDescription>();
 
   public void setMaxActiveTasks(int max) {
     this.maxActiveTasks = max;
   }
   
   @Override
-  synchronized void handleSubmitTask(TaskDescription task, String appId) {
+  synchronized void handleSubmitTask(TaskDescription task, String appId, boolean isFake) {
     if (activeTasks.get() < maxActiveTasks) {
-      makeTaskRunnable(task);
+      //Makes the input task runnable. Making Fake task runnable only if real  task isn empty and fake task is not.
+      // since it's already submitted, we need to make it runnable without any logic? Check
+      if (!isFake) {
+        makeTaskRunnable(task);
+      } else {
+        makeFakeTaskRunnable(task);
+      }
       activeTasks.incrementAndGet();
     } else {
       try {
-        tasks.put(task);
+        if (isFake) {
+          fakeTasks.put(task);
+        } else {
+          tasks.put(task);
+        }
       } catch (InterruptedException e) {
         LOG.fatal(e);
       }
@@ -42,8 +53,11 @@ public class FifoTaskScheduler extends TaskScheduler {
     activeTasks.decrementAndGet();
     if (!tasks.isEmpty()) {
       makeTaskRunnable(tasks.poll());
-      activeTasks.incrementAndGet();
     }
+    if(tasks.isEmpty() && !fakeTasks.isEmpty()){
+      makeTaskRunnable(fakeTasks.poll());
+    }
+    activeTasks.incrementAndGet();
   }
 
   @Override
@@ -52,6 +66,7 @@ public class FifoTaskScheduler extends TaskScheduler {
     out.resources = TResources.subtract(capacity, getFreeResources());
     // We use one shared queue for all apps here
     out.queueLength = tasks.size();
+    //Need to add another queueLength which isn't shared
     return out;
   }
 
