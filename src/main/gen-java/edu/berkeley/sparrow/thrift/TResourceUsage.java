@@ -35,6 +35,7 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
 
   private static final org.apache.thrift.protocol.TField RESOURCES_FIELD_DESC = new org.apache.thrift.protocol.TField("resources", org.apache.thrift.protocol.TType.STRUCT, (short)1);
   private static final org.apache.thrift.protocol.TField QUEUE_LENGTH_FIELD_DESC = new org.apache.thrift.protocol.TField("queueLength", org.apache.thrift.protocol.TType.I32, (short)2);
+  private static final org.apache.thrift.protocol.TField FAKE_QUEUE_LENGTH_FIELD_DESC = new org.apache.thrift.protocol.TField("fakeQueueLength", org.apache.thrift.protocol.TType.I32, (short)3);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -44,11 +45,13 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
 
   public TResourceVector resources; // required
   public int queueLength; // required
+  public int fakeQueueLength; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     RESOURCES((short)1, "resources"),
-    QUEUE_LENGTH((short)2, "queueLength");
+    QUEUE_LENGTH((short)2, "queueLength"),
+    FAKE_QUEUE_LENGTH((short)3, "fakeQueueLength");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -67,6 +70,8 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
           return RESOURCES;
         case 2: // QUEUE_LENGTH
           return QUEUE_LENGTH;
+        case 3: // FAKE_QUEUE_LENGTH
+          return FAKE_QUEUE_LENGTH;
         default:
           return null;
       }
@@ -108,13 +113,17 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
 
   // isset id assignments
   private static final int __QUEUELENGTH_ISSET_ID = 0;
+  private static final int __FAKEQUEUELENGTH_ISSET_ID = 1;
   private byte __isset_bitfield = 0;
+  private _Fields optionals[] = {_Fields.FAKE_QUEUE_LENGTH};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.RESOURCES, new org.apache.thrift.meta_data.FieldMetaData("resources", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TResourceVector.class)));
     tmpMap.put(_Fields.QUEUE_LENGTH, new org.apache.thrift.meta_data.FieldMetaData("queueLength", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.FAKE_QUEUE_LENGTH, new org.apache.thrift.meta_data.FieldMetaData("fakeQueueLength", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TResourceUsage.class, metaDataMap);
@@ -142,6 +151,7 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       this.resources = new TResourceVector(other.resources);
     }
     this.queueLength = other.queueLength;
+    this.fakeQueueLength = other.fakeQueueLength;
   }
 
   public TResourceUsage deepCopy() {
@@ -152,6 +162,8 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
     this.resources = null;
     setQueueLengthIsSet(false);
     this.queueLength = 0;
+    setFakeQueueLengthIsSet(false);
+    this.fakeQueueLength = 0;
   }
 
   public TResourceVector getResources() {
@@ -201,6 +213,29 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
     __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __QUEUELENGTH_ISSET_ID, value);
   }
 
+  public int getFakeQueueLength() {
+    return this.fakeQueueLength;
+  }
+
+  public TResourceUsage setFakeQueueLength(int fakeQueueLength) {
+    this.fakeQueueLength = fakeQueueLength;
+    setFakeQueueLengthIsSet(true);
+    return this;
+  }
+
+  public void unsetFakeQueueLength() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __FAKEQUEUELENGTH_ISSET_ID);
+  }
+
+  /** Returns true if field fakeQueueLength is set (has been assigned a value) and false otherwise */
+  public boolean isSetFakeQueueLength() {
+    return EncodingUtils.testBit(__isset_bitfield, __FAKEQUEUELENGTH_ISSET_ID);
+  }
+
+  public void setFakeQueueLengthIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __FAKEQUEUELENGTH_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case RESOURCES:
@@ -219,6 +254,14 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       }
       break;
 
+    case FAKE_QUEUE_LENGTH:
+      if (value == null) {
+        unsetFakeQueueLength();
+      } else {
+        setFakeQueueLength((Integer)value);
+      }
+      break;
+
     }
   }
 
@@ -229,6 +272,9 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
 
     case QUEUE_LENGTH:
       return Integer.valueOf(getQueueLength());
+
+    case FAKE_QUEUE_LENGTH:
+      return Integer.valueOf(getFakeQueueLength());
 
     }
     throw new IllegalStateException();
@@ -245,6 +291,8 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       return isSetResources();
     case QUEUE_LENGTH:
       return isSetQueueLength();
+    case FAKE_QUEUE_LENGTH:
+      return isSetFakeQueueLength();
     }
     throw new IllegalStateException();
   }
@@ -277,6 +325,15 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       if (!(this_present_queueLength && that_present_queueLength))
         return false;
       if (this.queueLength != that.queueLength)
+        return false;
+    }
+
+    boolean this_present_fakeQueueLength = true && this.isSetFakeQueueLength();
+    boolean that_present_fakeQueueLength = true && that.isSetFakeQueueLength();
+    if (this_present_fakeQueueLength || that_present_fakeQueueLength) {
+      if (!(this_present_fakeQueueLength && that_present_fakeQueueLength))
+        return false;
+      if (this.fakeQueueLength != that.fakeQueueLength)
         return false;
     }
 
@@ -316,6 +373,16 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetFakeQueueLength()).compareTo(typedOther.isSetFakeQueueLength());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetFakeQueueLength()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.fakeQueueLength, typedOther.fakeQueueLength);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -347,6 +414,12 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
     sb.append("queueLength:");
     sb.append(this.queueLength);
     first = false;
+    if (isSetFakeQueueLength()) {
+      if (!first) sb.append(", ");
+      sb.append("fakeQueueLength:");
+      sb.append(this.fakeQueueLength);
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -412,6 +485,14 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 3: // FAKE_QUEUE_LENGTH
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.fakeQueueLength = iprot.readI32();
+              struct.setFakeQueueLengthIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -435,6 +516,11 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       oprot.writeFieldBegin(QUEUE_LENGTH_FIELD_DESC);
       oprot.writeI32(struct.queueLength);
       oprot.writeFieldEnd();
+      if (struct.isSetFakeQueueLength()) {
+        oprot.writeFieldBegin(FAKE_QUEUE_LENGTH_FIELD_DESC);
+        oprot.writeI32(struct.fakeQueueLength);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -459,19 +545,25 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       if (struct.isSetQueueLength()) {
         optionals.set(1);
       }
-      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetFakeQueueLength()) {
+        optionals.set(2);
+      }
+      oprot.writeBitSet(optionals, 3);
       if (struct.isSetResources()) {
         struct.resources.write(oprot);
       }
       if (struct.isSetQueueLength()) {
         oprot.writeI32(struct.queueLength);
       }
+      if (struct.isSetFakeQueueLength()) {
+        oprot.writeI32(struct.fakeQueueLength);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TResourceUsage struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(2);
+      BitSet incoming = iprot.readBitSet(3);
       if (incoming.get(0)) {
         struct.resources = new TResourceVector();
         struct.resources.read(iprot);
@@ -480,6 +572,10 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       if (incoming.get(1)) {
         struct.queueLength = iprot.readI32();
         struct.setQueueLengthIsSet(true);
+      }
+      if (incoming.get(2)) {
+        struct.fakeQueueLength = iprot.readI32();
+        struct.setFakeQueueLengthIsSet(true);
       }
     }
   }
