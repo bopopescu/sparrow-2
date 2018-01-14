@@ -176,11 +176,11 @@ public class ProbingTaskPlacer implements TaskPlacer {
         LOG.debug("Real: " + workerSpeedMap + "VS: Estimated:  " + estimatedWorkerSpeedMap);
 
 
-        String workerMapBeingUsed = "";
-        if (estimatedWorkerSpeedMap.equalsIgnoreCase("{}"))
-            workerMapBeingUsed  = workerSpeedMap;
-        else
-            workerMapBeingUsed = estimatedWorkerSpeedMap;
+//        String workerMapBeingUsed = "";
+//        if (estimatedWorkerSpeedMap.equalsIgnoreCase("{}"))
+//            workerMapBeingUsed  = workerSpeedMap;
+//        else
+//            workerMapBeingUsed = estimatedWorkerSpeedMap;
 
 
         if (probeRatio < 1.0) {
@@ -216,7 +216,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
 
         //Extracting sorted nodes and worker speeds
-        workerMapBeingUsed = workerSpeedMap.substring(1, workerMapBeingUsed.length() - 1);           //remove curly brackets
+        workerSpeedMap = workerSpeedMap.substring(1, workerSpeedMap.length() - 1);           //remove curly brackets
         String[] keyValuePairs = workerSpeedMap.split(",");              //split the string to create key-value pairs
         ArrayList<String> backendList = new ArrayList<String>();
 
