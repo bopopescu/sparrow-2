@@ -77,9 +77,9 @@ public class SparrowFrontendClient {
   }
 
   public boolean submitJob(String app,
-      List<edu.berkeley.sparrow.thrift.TTaskSpec> tasks, TUserGroupInfo user , String workSpeedMap)
+      List<edu.berkeley.sparrow.thrift.TTaskSpec> tasks, TUserGroupInfo user , String workSpeedMap, boolean isFake)
           throws TException {
-    return submitRequest(new TSchedulingRequest(app, tasks, user, workSpeedMap));
+    return submitRequest(new TSchedulingRequest(app, tasks, user, workSpeedMap, isFake ));
   }
 
   public List<TTaskPlacement> getJobPlacement(String app,
@@ -103,17 +103,17 @@ public class SparrowFrontendClient {
   }
   
   public boolean submitJob(String app, List<edu.berkeley.sparrow.thrift.TTaskSpec> tasks,
-  	  TUserGroupInfo user, String description , String workSpeedMap) {
-  	TSchedulingRequest request = new TSchedulingRequest(app, tasks, user, workSpeedMap);
+  	  TUserGroupInfo user, String description , String workSpeedMap, boolean isFake) {
+  	TSchedulingRequest request = new TSchedulingRequest(app, tasks, user, workSpeedMap, isFake);
   	request.setDescription(description);
   	return submitRequest(request);
   }
 
   public boolean submitJob(String app,
       List<edu.berkeley.sparrow.thrift.TTaskSpec> tasks, TUserGroupInfo user,
-      double probeRatio, String workSpeedMap)
+      double probeRatio, String workSpeedMap, boolean isFake)
           throws TException {
-    TSchedulingRequest request = new TSchedulingRequest(app, tasks, user, workSpeedMap);
+    TSchedulingRequest request = new TSchedulingRequest(app, tasks, user, workSpeedMap, isFake);
     request.setProbeRatio(probeRatio);
     return submitRequest(request);
   }

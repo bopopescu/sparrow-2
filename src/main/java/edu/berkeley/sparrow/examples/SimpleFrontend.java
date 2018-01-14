@@ -136,12 +136,21 @@ public class SimpleFrontend implements FrontendService.Iface {
         private ArrayList<Double> taskDurations;
         private int i;
         private String workSpeedMap;
+        private boolean isFake;
 
         public JobLaunchRunnable(int tasksPerJob, ArrayList<Double> taskDurations, String workSpeedMap) {
             this.tasksPerJob = tasksPerJob;
             this.taskDurations = taskDurations;
             this.i = 0; //index
             this.workSpeedMap = workSpeedMap;
+        }
+
+        public void setFake(boolean isFake) {
+            this.isFake = isFake;
+        }
+
+        public boolean getFake() {
+            return this.isFake;
         }
 
         @Override
@@ -163,7 +172,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             }
             long start = System.currentTimeMillis();
             try {
-                client.submitJob(APPLICATION_ID, tasks, USER, workSpeedMap);
+                client.submitJob(APPLICATION_ID, tasks, USER, workSpeedMap, isFake);
             } catch (TException e) {
                 LOG.error("Scheduling request failed!", e);
             }
@@ -281,12 +290,20 @@ public class SimpleFrontend implements FrontendService.Iface {
             client.initialize(new InetSocketAddress(schedulerHost, schedulerPort), APPLICATION_ID, this);
 
             JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
-            ScheduledThreadPoolExecutor taskLauncher = new ScheduledThreadPoolExecutor(1);
+            //TODO =====> We changed the core Pool size to 2 from 1
+            ScheduledThreadPoolExecutor taskLauncher = new ScheduledThreadPoolExecutor(2);
+
+            JobLaunchRunnable runnableFake = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
+            runnableFake.setFake(true);
+
 
             ScheduledFuture<?> sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
 
+            ScheduledFuture<?> sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
 
-	     List<Integer> arrivalList = Arrays.asList(100,300,400,500,1000,1500,2000);
+
+
+            List<Integer> arrivalList = Arrays.asList(100, 300, 400, 500, 1000, 1500, 2000);
             int arrivalCount = arrivalList.size();
             int i = 0;
             long startTime = System.currentTimeMillis();
@@ -299,7 +316,7 @@ public class SimpleFrontend implements FrontendService.Iface {
 
                 Thread.sleep(100);
                 long elapsedTime = System.currentTimeMillis() - startTime;
-                if (elapsedTime > i *30*1000 && isCanceled == false) {
+                if (elapsedTime > i * 30 * 1000 && isCanceled == false) {
                     LOG.debug("Cancelling <--");
                     sf.cancel(true);
                     isCanceled = true;
@@ -312,7 +329,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                     restarted = true;
                     isCanceled = false;
                     ++i;
-		    ++count;
+                    ++count;
                 }
             }
 

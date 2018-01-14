@@ -197,6 +197,7 @@ public class Scheduler {
         if (req.getDescription() != null) {
             description = req.getDescription();
         }
+        boolean isFake = req.isFake;
 
         AUDIT_LOG.info(Logging.auditEventString("arrived", requestId,
                 req.getTasks().size(),
@@ -397,6 +398,7 @@ public class Scheduler {
         LOG.debug(Logging.functionCall(req));
         String app = req.getApp();
         String workerSpeedMap = req.getWorkSpeedMap();
+
         List<TTaskSpec> tasks = req.getTasks();
         Set<InetSocketAddress> backends = state.getBackends(app);
         List<InetSocketAddress> backendList = new ArrayList<InetSocketAddress>(backends.size());
