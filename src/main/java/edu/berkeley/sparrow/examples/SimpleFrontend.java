@@ -250,7 +250,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             random.setSeed(123456789);
             double value = 0;
             double sumValue = 0;
-            for (int l = 0; l < totalNoOfTasks; l++) {
+            for (int l = 0; l < totalNoOfTasks+200; l++) {
                 value = getNext(lambda);
                 taskDurations.add(value);
                 sumValue += value;
@@ -266,7 +266,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             long arrivalPeriodMillis = (long) (tasksPerJob / arrivalRate);
             //Get Experiment duration based on no. of tasks (in s)
             //Need to add more seconds to make sure all tasks get executed
-            experimentDurationS = (int) ((totalNoOfTasks) * (arrivalPeriodMillis + 2) / (1000 * tasksPerJob));
+            experimentDurationS = (int) ((totalNoOfTasks) * (arrivalPeriodMillis) / (1000 * tasksPerJob));
 
 //            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
 //                    "; W:  " + final_worker_speeds.length + "Worker Speeds: " + final_worker_speeds.toString() + "; TOTAL TASK NUMBER: " + totalNoOfTasks);
@@ -300,7 +300,7 @@ public class SimpleFrontend implements FrontendService.Iface {
     public void frontendMessage(TFullTaskId taskId, int status, ByteBuffer message)
             throws TException {
         // We don't use messages here, so just log it.
-        LOG.debug("Got unexpected message: " + Serialization.getByteBufferContents(message));
+        LOG.debug("Got Expected message: " + message.getDouble());
         if(status==1){
             taskLauncher.shutdown();
         }
