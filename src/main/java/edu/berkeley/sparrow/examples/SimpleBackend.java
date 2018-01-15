@@ -223,7 +223,7 @@ public class SimpleBackend implements BackendService.Iface {
                     ByteBuffer message = ByteBuffer.allocate(8);
                     //Send the task Completion Time
                     message.putDouble(Double.valueOf(11111)); //Just for check Think about what we really want to pass
-                    client.sendFrontendMessage(taskId.appId,taskId,1,message);
+                    client.sendFrontendMessage(taskId.appId,taskId,1, ByteBuffer.wrap(message.array()));
                 }
 
             } catch (TException e) {
