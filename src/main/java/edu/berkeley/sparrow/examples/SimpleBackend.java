@@ -231,8 +231,8 @@ public class SimpleBackend implements BackendService.Iface {
                 e.printStackTrace();
             }
             //TODO Understand why this is being done.
-            client.getInputProtocol().getTransport().close();
-            client.getOutputProtocol().getTransport().close();
+           // client.getInputProtocol().getTransport().close();
+           // client.getOutputProtocol().getTransport().close();
         }
     }
 
