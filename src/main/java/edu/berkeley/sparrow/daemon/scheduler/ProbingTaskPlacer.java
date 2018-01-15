@@ -195,9 +195,15 @@ public class ProbingTaskPlacer implements TaskPlacer {
         List<InetSocketAddress> subNodeList = new ArrayList<InetSocketAddress>();
         HashMap<InetSocketAddress, String> nodeListMap = new HashMap<InetSocketAddress, String>();
 
+
+
         //NodeList Map is sorted based on nodeList and it has worker speed from  estimatedWorker Speed
         for (InetSocketAddress node : nodeList) {
-            nodeListMap.put(node, estimatedWorkerSpeedMap.get(node.getAddress().getHostAddress()));
+            if (estimatedWorkerSpeedMap.isEmpty()) {
+                nodeListMap.put(node, "1");
+            } else {
+                nodeListMap.put(node, estimatedWorkerSpeedMap.get(node.getAddress().getHostAddress()));
+            }
         }
 
         for (Map.Entry<InetSocketAddress, String> entry : nodeListMap.entrySet()) {
