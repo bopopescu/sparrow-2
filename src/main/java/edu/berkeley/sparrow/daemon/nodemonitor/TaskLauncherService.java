@@ -27,7 +27,7 @@ public class TaskLauncherService {
    * to determine how many thrift connections to keep open to each backend, so that
    * in the limit case where all threads are talking to the same backend, we don't run
    * out of connections.*/
-  public final static int CLIENT_POOL_SIZE = 10;
+  public final static int CLIENT_POOL_SIZE = 1;
   
   /** A runnable which spins in a loop asking for tasks to launch and launching them. */
   private class TaskLaunchRunnable implements Runnable {

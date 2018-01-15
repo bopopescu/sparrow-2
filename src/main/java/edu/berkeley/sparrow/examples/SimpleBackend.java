@@ -18,6 +18,7 @@ package edu.berkeley.sparrow.examples;
 
 import com.google.common.collect.Lists;
 import edu.berkeley.sparrow.daemon.SparrowConf;
+import edu.berkeley.sparrow.daemon.nodemonitor.NodeMonitor;
 import edu.berkeley.sparrow.daemon.nodemonitor.NodeMonitorThrift;
 import edu.berkeley.sparrow.daemon.util.TClients;
 import edu.berkeley.sparrow.daemon.util.TServers;
