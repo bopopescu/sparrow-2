@@ -41,9 +41,11 @@ import java.io.StringReader;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -78,12 +80,19 @@ public class SimpleBackend implements BackendService.Iface {
     private static final String DEFAULT_NODE_MONITOR_HOST = "localhost";
     private static String NODE_MONITOR_PORT = "node_monitor_port";
     private static int nodeMonitorPort;
+    private static int totalNoOfTasks=100;
     private static String nodeMonitorHost = "localhost";
 
     private static String SLAVES = "slaves";
     private static String DEFAULT_NO_SLAVES = "slaves";
 
     private static Double globalHostWorkerSpeed = -1.0;
+
+    /**
+     * Total Number of tasks.
+     */
+    public static final String TOTAL_NO_OF_TASKS = "total_no_tasks";
+    public static final int DEFAULT_TOTAL_NO_OF_TASKS = 3500;
 
     private static Client client;
     private static String workSpeed;
@@ -198,6 +207,29 @@ public class SimpleBackend implements BackendService.Iface {
             } catch (TException e) {
                 e.printStackTrace();
             }
+
+
+            try {
+                client.tasksFinished(Lists.newArrayList(taskId));
+                String requestId = taskId.getRequestId();
+                if ((requestId.substring(requestId.lastIndexOf("_") + 1)).equalsIgnoreCase(String.valueOf(totalNoOfTasks))){
+                    List<String> lines = Arrays.asList("Just finished Launching request"+ requestId);
+                    try {
+                        Path file = Paths.get("/root/finishedLaunchingFinalTask.comp");
+                        Files.write(file, lines, Charset.forName("UTF-8"));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    ByteBuffer message = ByteBuffer.allocate(8);
+                    //Send the task Completion Time
+                    message.putDouble(Double.valueOf(11111)); //Just for check Think about what we really want to pass
+                    client.sendFrontendMessage(taskId.appId,taskId,1,message);
+                }
+
+            } catch (TException e) {
+                e.printStackTrace();
+            }
+            //TODO Understand why this is being done.
             client.getInputProtocol().getTransport().close();
             client.getOutputProtocol().getTransport().close();
         }
@@ -254,6 +286,7 @@ public class SimpleBackend implements BackendService.Iface {
         LOG.setLevel(Level.DEBUG);
         LOG.debug("debug logging on");
 
+
         Configuration conf = new PropertiesConfiguration();
 
 
@@ -285,6 +318,7 @@ public class SimpleBackend implements BackendService.Iface {
             workSpeed = workSpeed + node + ",";
         }
 
+
         // Start backend server
         BackendService.Processor<BackendService.Iface> processor =
                 new BackendService.Processor<BackendService.Iface>(new SimpleBackend());
@@ -294,6 +328,7 @@ public class SimpleBackend implements BackendService.Iface {
 
         nodeMonitorPort = conf.getInt(NODE_MONITOR_PORT, NodeMonitorThrift.DEFAULT_NM_THRIFT_PORT);
         nodeMonitorHost = conf.getString(NODE_MONITOR_HOST, DEFAULT_NODE_MONITOR_HOST);
+        totalNoOfTasks= conf.getInt(TOTAL_NO_OF_TASKS, DEFAULT_TOTAL_NO_OF_TASKS);
 
         // Register server
         client = TClients.createBlockingNmClient(nodeMonitorHost, nodeMonitorPort);

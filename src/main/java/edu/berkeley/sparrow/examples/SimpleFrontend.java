@@ -62,7 +62,7 @@ public class SimpleFrontend implements FrontendService.Iface {
     public static final int DEFAULT_TASKS_PER_JOB = 1;
 
     /**
-     * Number of tasks per job.
+     * Total Number of tasks.
      */
     public static final String TOTAL_NO_OF_TASKS = "total_no_tasks";
     public static final int DEFAULT_TOTAL_NO_OF_TASKS = 3500;
@@ -114,7 +114,7 @@ public class SimpleFrontend implements FrontendService.Iface {
         return worker_speeds;
     }
 
-
+    public static ScheduledThreadPoolExecutor taskLauncher=null;
     /**
      * Default application name.
      */
@@ -281,7 +281,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             client.initialize(new InetSocketAddress(schedulerHost, schedulerPort), APPLICATION_ID, this);
 
             JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
-            ScheduledThreadPoolExecutor taskLauncher = new ScheduledThreadPoolExecutor(1);
+            taskLauncher = new ScheduledThreadPoolExecutor(1);
             taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
 
 
@@ -301,6 +301,9 @@ public class SimpleFrontend implements FrontendService.Iface {
             throws TException {
         // We don't use messages here, so just log it.
         LOG.debug("Got unexpected message: " + Serialization.getByteBufferContents(message));
+        if(status==1){
+            taskLauncher.shutdown();
+        }
     }
 
     public static void main(String[] args) {
