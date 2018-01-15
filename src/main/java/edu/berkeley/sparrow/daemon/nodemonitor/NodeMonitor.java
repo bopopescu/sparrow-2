@@ -123,10 +123,15 @@ public class NodeMonitor {
     if (appId.equals("*")) {
       for (String app : appSockets.keySet()) {
         out.put(app, scheduler.getResourceUsage(app));
+        LOG.debug("QueueLength is " + (scheduler.getResourceUsage(app).queueLength));
+        LOG.debug("FakeQueueLength is " + (scheduler.getResourceUsage(app).fakeQueueLength));
+
       }
     }
     else {
       out.put(appId, scheduler.getResourceUsage(appId));
+      LOG.debug("QueueLength is " + (scheduler.getResourceUsage(appId).queueLength));
+      LOG.debug("FakeQueueLength is " + (scheduler.getResourceUsage(appId).fakeQueueLength));
     }
     LOG.debug("Returning " + out);
     return out;

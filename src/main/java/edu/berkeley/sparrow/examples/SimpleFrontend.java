@@ -238,7 +238,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             }
 
 
-            TOTAL_WORKERS = backends.size();
+            //TOTAL_WORKERS = backends.size();
             int experimentDurationS = conf.getInt(EXPERIMENT_S, DEFAULT_EXPERIMENT_S);
             int taskDurationMillis = conf.getInt(TASK_DURATION_MILLIS, DEFAULT_TASK_DURATION_MILLIS);
             double load = conf.getDouble(LOAD, DEFAULT_LOAD);
@@ -279,6 +279,9 @@ public class SimpleFrontend implements FrontendService.Iface {
 
 //            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
 //                    "; W:  " + final_worker_speeds.length + "Worker Speeds: " + final_worker_speeds.toString() + "; TOTAL TASK NUMBER: " + totalNoOfTasks);
+
+            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate
+                    + "; TOTAL TASK NUMBER: " + totalNoOfTasks);
 
             LOG.debug("Using arrival period of " + arrivalPeriodMillis +
                     " milliseconds and running experiment for " + experimentDurationS + " seconds.");
