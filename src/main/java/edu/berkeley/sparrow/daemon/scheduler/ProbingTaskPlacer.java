@@ -41,6 +41,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
     private ThriftClientPool<AsyncClient> clientPool;
     private RandomTaskPlacer randomPlacer;
+    private final String DEFAULT_WORKER_SPEED = "1";
 
 
     //Test case in sparrow/src/test/java/edu/berkeley/sparrow/daemon/scheduler/TestPSS.java
@@ -196,11 +197,10 @@ public class ProbingTaskPlacer implements TaskPlacer {
         HashMap<InetSocketAddress, String> nodeListMap = new HashMap<InetSocketAddress, String>();
 
 
-
         //NodeList Map is sorted based on nodeList and it has worker speed from  estimatedWorker Speed
         for (InetSocketAddress node : nodeList) {
             if (estimatedWorkerSpeedMap.isEmpty()) {
-                nodeListMap.put(node, "1");
+                nodeListMap.put(node, DEFAULT_WORKER_SPEED);
             } else {
                 nodeListMap.put(node, estimatedWorkerSpeedMap.get(node.getAddress().getHostAddress()));
             }
