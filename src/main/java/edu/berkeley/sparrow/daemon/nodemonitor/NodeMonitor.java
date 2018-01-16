@@ -137,6 +137,7 @@ public class NodeMonitor {
   public void tasksFinished(List<TFullTaskId> tasks) {
     LOG.debug(Logging.functionCall(tasks));
     scheduler.tasksFinished(tasks);
+    LOG.debug("QueueLength is " + (scheduler.getResourceUsage(tasks.get(0).getAppId()).getQueueLength()));
   }
 
   /**
