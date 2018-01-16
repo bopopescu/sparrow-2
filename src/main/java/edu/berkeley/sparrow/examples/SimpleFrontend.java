@@ -270,6 +270,8 @@ public class SimpleFrontend implements FrontendService.Iface {
 
 //            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
 //                    "; W:  " + final_worker_speeds.length + "Worker Speeds: " + final_worker_speeds.toString() + "; TOTAL TASK NUMBER: " + totalNoOfTasks);
+            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
+                "; TOTAL TASK NUMBER: " + totalNoOfTasks);
 
             LOG.debug("Using arrival period of " + arrivalPeriodMillis +
                     " milliseconds and running experiment for " + experimentDurationS + " seconds.");
