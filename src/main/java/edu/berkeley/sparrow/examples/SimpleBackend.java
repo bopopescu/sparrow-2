@@ -178,14 +178,7 @@ public class SimpleBackend implements BackendService.Iface {
             LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
             LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
             LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
-
-            try {
-                client.tasksFinished(Lists.newArrayList(taskId));
-            } catch (TException e) {
-                e.printStackTrace();
-            }
-            client.getInputProtocol().getTransport().close();
-            client.getOutputProtocol().getTransport().close();
+            finishedTasks.add(taskId);
         }
     }
 
@@ -274,7 +267,7 @@ public class SimpleBackend implements BackendService.Iface {
             thisHost = Inet4Address.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
             e.printStackTrace();
-        } 
+        }
 
 
         Properties props = new Properties();
