@@ -164,11 +164,11 @@ public class SimpleBackend implements BackendService.Iface {
                 LOG.fatal("Error creating NM client", e);
             }
             int minutes = (int) (((System.currentTimeMillis() / 1000) / 60) % 60);
-            LOG.debug("Minute is " + minutes + " worker speed is " + hostWorkSpeed);
+
             if (mapAlteration.get(minutes) != null) {
                 hostWorkSpeed = mapAlteration.get(minutes);
             }
-
+            LOG.debug("Minute is " + minutes);
             String thisHost = null;
             try {
                 thisHost = Inet4Address.getLocalHost().getHostAddress();
