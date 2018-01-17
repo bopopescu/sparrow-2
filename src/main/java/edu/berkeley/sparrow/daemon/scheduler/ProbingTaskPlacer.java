@@ -34,6 +34,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
      * See {@link SparrowConf.PROBE_MULTIPLIER}
      */
     private double probeRatio;
+    private int policy;
 
     private ThriftClientPool<AsyncClient> clientPool;
     private RandomTaskPlacer randomPlacer;
@@ -117,9 +118,31 @@ public class ProbingTaskPlacer implements TaskPlacer {
     public void initialize(Configuration conf, ThriftClientPool<AsyncClient> clientPool) {
         probeRatio = conf.getDouble(SparrowConf.SAMPLE_RATIO,
                 SparrowConf.DEFAULT_SAMPLE_RATIO);
+        policy = conf.getInt(SparrowConf.POLICY, SparrowConf.DEFAULT_POLICY);
         this.clientPool = clientPool;
         randomPlacer = new RandomTaskPlacer();
         randomPlacer.initialize(conf, clientPool);
+    }
+
+    private List<InetSocketAddress> returnNodeList(int probesToLaunch, double[] cdf_worker_speed, HashMap<String, InetSocketAddress> nodeToInetMap,  ArrayList<String> backendList ){
+        //This was used to make sure probes aren't sent to same worker
+        ArrayList<Integer> workerIndex = new ArrayList<Integer>();
+        //This is supposed to be the nodelist for specified no. of probes
+        List<InetSocketAddress> subNodeList = new ArrayList<InetSocketAddress>();
+
+        for (int i = 0; i < probesToLaunch; i++) {
+            int workerIndexReservation = ConfigFunctions.getIndexFromPSS(cdf_worker_speed, workerIndex);
+            workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
+        }
+
+        //After ConfigFunctions, we're getting the index of worker with higher probability
+        //Nodelist contains the list of workers and workerIndex contains indices from that node list
+        //So this comparision should make sense but using hashmap would be a better idea.
+        for (int j = 0; j < workerIndex.size(); j++) {
+            String hostFromWorkerSpeed = backendList.get(workerIndex.get(j));
+            subNodeList.add(nodeToInetMap.get(hostFromWorkerSpeed));
+        }
+        return subNodeList;
     }
 
     @Override
@@ -141,7 +164,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
         //TODO This assumes that we have more workers than probes
         int probesToLaunch = (int) Math.ceil(probeRatio * tasks.size());
 
-        LOG.debug("Launching " + probesToLaunch + " probes"); //TODO verify this
+        LOG.debug("Launching " + probesToLaunch + " probes");
 
         // Right now we wait for all probes to return, in the future we might add a timeout
         CountDownLatch latch = new CountDownLatch(probesToLaunch);
@@ -171,33 +194,28 @@ public class ProbingTaskPlacer implements TaskPlacer {
             e.printStackTrace();
         }
 
-        //This was used to make sure probes aren't sent to same worker
-        ArrayList<Integer> workerIndex = new ArrayList<Integer>();
-        //This is supposed to be the nodelist for specified no. of probes
-        List<InetSocketAddress> subNodeList = new ArrayList<InetSocketAddress>();
 
 
-        if (nodes.size() > probesToLaunch) {
-            for (int i = 0; i < probesToLaunch; i++) {
-                int workerIndexReservation = ConfigFunctions.getIndexFromPSS(cdf_worker_speed, workerIndex);
-                workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
+        if (policy == 1) { //PSS + POT where probes to launch determines
+            if (nodes.size() > probesToLaunch) {
+                nodeList = returnNodeList(probesToLaunch,cdf_worker_speed,nodeToInetMap,backendList);
+            } else {
+                LOG.debug("WARNING :: No. of Probes is greater than Nodes Size. PSS not running. Only sending specified no. of probes.");
+                LOG.debug("Currently Probing all available machines");
+                // Get a random subset of nodes by shuffling list . This can be used if we're not using pss
+                Collections.shuffle(nodeList);
+                nodeList = nodeList.subList(0, nodeList.size());
             }
-
-            //After ConfigFunctions, we're getting the index of worker with higher probability
-            //Nodelist contains the list of workers and workerIndex contains indices from that node list
-            //So this comparision should make sense but using hashmap would be a better idea.
-            for (int j = 0; j < workerIndex.size(); j++) {
-                String hostFromWorkerSpeed = backendList.get(workerIndex.get(j));
-                subNodeList.add(nodeToInetMap.get(hostFromWorkerSpeed));
+        } else if (policy == 2) { //PSS i.e probes all the machines
+            LOG.debug("Only PSS");
+            nodeList = returnNodeList(nodeList.size(),cdf_worker_speed,nodeToInetMap,backendList);
+        } else if (policy == 3) {
+            LOG.debug("POT Without PSS");
+            if (nodeList.size() > 1) {
+                Collections.shuffle(nodeList);
+                nodeList = nodeList.subList(0, 2); //Hardcode 2 from Power of Two here
             }
-            nodeList = subNodeList;
-        } else {
-            LOG.debug("No. of Probes is greater than Nodes Size. PSS not running. Only sending specified no. of probes.");
-            // Get a random subset of nodes by shuffling list . This can be used if we're not using pss
-            Collections.shuffle(nodeList);
-            nodeList = nodeList.subList(0, probesToLaunch);
         }
-
         //all the nodes will be probed if there are more less machine than the probes
         for (InetSocketAddress node : nodeList) {
             try {

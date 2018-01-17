@@ -79,4 +79,7 @@ public class SparrowConf {
   public final static int DEFAULT_SPREAD_EVENLY_TASK_SET_SIZE = 1;
   
   public final static String USE_PER_TASK_SAMPLING = "per_task";
+
+  public final static String POLICY = "policy";
+  public final static int DEFAULT_POLICY= 1; //1 PSS+POT, 2 : PSS,  3 ; POT
 }
