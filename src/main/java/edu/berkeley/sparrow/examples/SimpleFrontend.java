@@ -61,10 +61,15 @@ public class SimpleFrontend implements FrontendService.Iface {
     public static final String TASKS_PER_JOB = "tasks_per_job";
     public static final int DEFAULT_TASKS_PER_JOB = 1;
 
+    //Sending this extra tasks so that the runnable doesn't crash because
+    //it keeps fetching from taskDuration arraylist until the experiment duration is completed.
+    //We can't be very precise.
+    public static final int EXTRA_TASKS = 500;
+
     /**
      * Number of tasks per job.
      */
-    public static final String TOTAL_NO_OF_TASKS = "total_no_tasks";
+    public static final String TOTAL_NO_OF_TASKS = "total_no_of_tasks";
     public static final int DEFAULT_TOTAL_NO_OF_TASKS = 3500;
 
     public static final String LOAD = "load";
@@ -85,20 +90,33 @@ public class SimpleFrontend implements FrontendService.Iface {
     public static final String DEFAULT_SCHEDULER_HOST = "localhost";
     public static final String SCHEDULER_PORT = "scheduler_port";
 
-    public static Random random = new Random();
+    /**
+     * Default application name.
+     */
+    public static final String APPLICATION_ID = "sleepApp";
+
+    private static final Logger LOG = Logger.getLogger(SimpleFrontend.class);
+
+    private static final TUserGroupInfo USER = new TUserGroupInfo();
+
+    private SparrowFrontendClient client;
+
+    private final static Logger AUDIT_LOG = Logging.getCustomAuditLogger(SimpleFrontend.class);
 
     //Worker Speed Mapped to its corresponding worker
     public static Map<String, String> workSpeedMap = new HashMap<String, String>();
+    //To pass different task duration to the runnable.
     static ArrayList<Double> taskDurations = new ArrayList<Double>();
+    public static Random random = new Random();
 
     //Get data from exponential Distribution with parameter lambda
     public static double getNext(double lambda) {
         return Math.log(1 - random.nextDouble()) / (-lambda);
     }
 
-    //For Zipf's Distribution
+    /******** For Zipf's Distribution Not currently being used ****************/
+
     public static int RATIO_BETWEEN_MAX_MIN = 100;
-    public static int TOTAL_WORKERS = 10;
     public static double upper_bound = 1.0;
     public static double lower_bound = upper_bound / RATIO_BETWEEN_MAX_MIN;
 
@@ -113,20 +131,7 @@ public class SimpleFrontend implements FrontendService.Iface {
         }
         return worker_speeds;
     }
-
-
-    /**
-     * Default application name.
-     */
-    public static final String APPLICATION_ID = "sleepApp";
-
-    private static final Logger LOG = Logger.getLogger(SimpleFrontend.class);
-
-    private static final TUserGroupInfo USER = new TUserGroupInfo();
-
-    private SparrowFrontendClient client;
-
-    private final static Logger AUDIT_LOG = Logging.getCustomAuditLogger(SimpleFrontend.class);
+    /******** For Zipf's Distribution Not currently being used ****************/
 
     /**
      * A runnable which Spawns a new thread to launch a scheduling request.
@@ -181,7 +186,6 @@ public class SimpleFrontend implements FrontendService.Iface {
             parser.accepts("help", "print help statement");
             OptionSet options = parser.parse(args);
             //Logging.configureAuditLoggingNew();
-            AUDIT_LOG.info("node_monitor_get_task_complete");
             if (options.has("help")) {
                 parser.printHelpOn(System.out);
                 System.exit(-1);
@@ -197,7 +201,10 @@ public class SimpleFrontend implements FrontendService.Iface {
                 String configFile = (String) options.valueOf("c");
                 conf = new PropertiesConfiguration(configFile);
             }
+
+            //Gives us the private IP addresses
             Set<InetSocketAddress> backends = ConfigUtil.parseBackends(conf);
+            int total_workers = backends.size();
 
             //Use this flag to retrieve the backend and worker speed mapping
             Configuration slavesConfig = new PropertiesConfiguration();
@@ -219,6 +226,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                 workSpeed = workSpeed + node + ",";
             }
 
+            //The workspeed.txt file contains list of worker speeds. They're mapped to the ip addresses available
             Properties props = new Properties();
             props.load(new StringReader(workSpeed.replace(",", "\n")));
             //Could have use the properties object but trying to make it consistent with other code.
@@ -228,29 +236,27 @@ public class SimpleFrontend implements FrontendService.Iface {
                 workSpeedMap.put(e.getKey().toString(), e.getValue().toString());
             }
 
-
-            TOTAL_WORKERS = backends.size();
+            //We don't necessarilty have to define the experiment duration. Just need to make sure that we pass
+            //more task duration so that task launcher doesn't crash. Note that, even if the taskLauncher crashes,
+            //it doesn't really affect the logs that we're trying to fetch.
             int experimentDurationS = conf.getInt(EXPERIMENT_S, DEFAULT_EXPERIMENT_S);
             int taskDurationMillis = conf.getInt(TASK_DURATION_MILLIS, DEFAULT_TASK_DURATION_MILLIS);
             double load = conf.getDouble(LOAD, DEFAULT_LOAD);
             int totalNoOfTasks = conf.getInt(TOTAL_NO_OF_TASKS, DEFAULT_TOTAL_NO_OF_TASKS);
             int tasksPerJob = conf.getInt(TASKS_PER_JOB, DEFAULT_TASKS_PER_JOB);
 
-//            //TODO parse for file here as well
-//            //Using earlier calculated worker speed generated using above commented code.
-//            double[] final_worker_speeds = new double[]{0.38125, 1.0, 0.17499999999999996, 0.38125, 1.0, 0.07187499999999998, 0.01, 0.38125, 1.0, 1.0};
-
             double W = 0; //W is total Worker Speed in the system
             for (double m : workerSpeed) {
                 W += m;
             }
+
             //Generate Exponential Data
             int median_task_duration = taskDurationMillis;
             double lambda = 1.0 / median_task_duration;
             random.setSeed(123456789);
             double value = 0;
             double sumValue = 0;
-            for (int l = 0; l < totalNoOfTasks; l++) {
+            for (int l = 0; l < totalNoOfTasks+EXTRA_TASKS; l++) { //Added extra tasks
                 value = getNext(lambda);
                 taskDurations.add(value);
                 sumValue += value;
@@ -264,14 +270,13 @@ public class SimpleFrontend implements FrontendService.Iface {
             double arrivalRate = load * serviceRate;
             //Get Arrival Period for individual task
             long arrivalPeriodMillis = (long) (tasksPerJob / arrivalRate);
+
             //Get Experiment duration based on no. of tasks (in s)
             //Need to add more seconds to make sure all tasks get executed
-            experimentDurationS = (int) ((totalNoOfTasks) * (arrivalPeriodMillis + 2) / (1000 * tasksPerJob));
+            experimentDurationS = (int) ((totalNoOfTasks) * (arrivalPeriodMillis) / (1000 * tasksPerJob));
 
-//            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
-//                    "; W:  " + final_worker_speeds.length + "Worker Speeds: " + final_worker_speeds.toString() + "; TOTAL TASK NUMBER: " + totalNoOfTasks);
             LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
-                "; TOTAL TASK NUMBER: " + totalNoOfTasks);
+                "; TOTAL TASK NUMBER: " + totalNoOfTasks + ", Extra Tasks: " + EXTRA_TASKS );
 
             LOG.debug("Using arrival period of " + arrivalPeriodMillis +
                     " milliseconds and running experiment for " + experimentDurationS + " seconds.");
@@ -282,10 +287,10 @@ public class SimpleFrontend implements FrontendService.Iface {
             client = new SparrowFrontendClient();
             client.initialize(new InetSocketAddress(schedulerHost, schedulerPort), APPLICATION_ID, this);
 
+            //Passing workerSpeedMap as string from frontend to scheduler
             JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
             ScheduledThreadPoolExecutor taskLauncher = new ScheduledThreadPoolExecutor(1);
             taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
-
 
             long startTime = System.currentTimeMillis();
             LOG.debug("sleeping");
@@ -306,7 +311,6 @@ public class SimpleFrontend implements FrontendService.Iface {
     }
 
     public static void main(String[] args) {
-        BasicConfigurator.configure();
         new SimpleFrontend().run(args);
 
     }
