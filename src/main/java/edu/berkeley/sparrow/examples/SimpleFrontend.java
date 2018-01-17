@@ -151,29 +151,33 @@ public class SimpleFrontend implements FrontendService.Iface {
 
         @Override
         public void run() {
-            // Generate tasks in the format expected by Sparrow. First, pack task parameters.
-            ByteBuffer message = ByteBuffer.allocate(16);
-            //Sending this to double confirm response time and waiting time
-            message.putLong(System.currentTimeMillis());
-            //Get Different Task Durations from Exp Distribution
-            message.putDouble(taskDurations.get(i));
-            i++;
-
-            List<TTaskSpec> tasks = new ArrayList<TTaskSpec>();
-            for (int taskId = 0; taskId < tasksPerJob; taskId++) {
-                TTaskSpec spec = new TTaskSpec();
-                spec.setTaskId(Integer.toString(taskId));
-                spec.setMessage(message.array());
-                tasks.add(spec);
-            }
-            long start = System.currentTimeMillis();
             try {
-                client.submitJob(APPLICATION_ID, tasks, USER, workSpeedMap);
-            } catch (TException e) {
-                LOG.error("Scheduling request failed!", e);
+                // Generate tasks in the format expected by Sparrow. First, pack task parameters.
+                ByteBuffer message = ByteBuffer.allocate(16);
+                //Sending this to double confirm response time and waiting time
+                message.putLong(System.currentTimeMillis());
+                //Get Different Task Durations from Exp Distribution
+                message.putDouble(taskDurations.get(i));
+                i++;
+
+                List<TTaskSpec> tasks = new ArrayList<TTaskSpec>();
+                for (int taskId = 0; taskId < tasksPerJob; taskId++) {
+                    TTaskSpec spec = new TTaskSpec();
+                    spec.setTaskId(Integer.toString(taskId));
+                    spec.setMessage(message.array());
+                    tasks.add(spec);
+                }
+                long start = System.currentTimeMillis();
+                try {
+                    client.submitJob(APPLICATION_ID, tasks, USER, workSpeedMap);
+                } catch (TException e) {
+                    LOG.error("Scheduling request failed!", e);
+                }
+                long end = System.currentTimeMillis();
+                LOG.debug("Scheduling request duration " + (end - start));
+            } catch (Exception e){
+                LOG.debug(e.getMessage());
             }
-            long end = System.currentTimeMillis();
-            LOG.debug("Scheduling request duration " + (end - start));
         }
     }
 

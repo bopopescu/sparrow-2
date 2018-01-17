@@ -60,7 +60,7 @@ public class SimpleBackend implements BackendService.Iface {
     private static final String LISTEN_PORT = "listen_port";
     private static final int DEFAULT_LISTEN_PORT = 20101;
 
-    public static AtomicInteger numTasks = new AtomicInteger(0);
+
     public static long startTime = -1;
 
     /**
@@ -83,10 +83,11 @@ public class SimpleBackend implements BackendService.Iface {
     private static String SLAVES = "slaves";
     private static String DEFAULT_NO_SLAVES = "slaves";
 
-    private static Double globalHostWorkerSpeed = -1.0;
+    private static Double hostWorkSpeed = -1.0; //Initialization. The value will be replaced
 
     private static Client client;
     private static String workSpeed;
+    private static String thisHost = null;
 
     private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
     private static final ExecutorService executor =
@@ -148,24 +149,13 @@ public class SimpleBackend implements BackendService.Iface {
                 LOG.fatal("Error creating NM client", e);
             }
 
-            Double hostWorkSpeed = -1.0; //Initialization. The value will be replaced
-
-            String thisHost = null;
             try {
-                thisHost = Inet4Address.getLocalHost().getHostAddress();
+                //thisHost = Inet4Address.getLocalHost().getHostAddress();
 
                 //Getting rid of repeated parsing of the string
-                if (globalHostWorkerSpeed == -1.0) {
-                    Properties props = new Properties();
-                    props.load(new StringReader(workSpeed.replace(",", "\n")));
-                    for (Map.Entry<Object, Object> e : props.entrySet()) {
-                        if ((String.valueOf(e.getKey())).equals(thisHost)) {
-                            hostWorkSpeed = Double.valueOf((String) e.getValue());
-                        }
-                    }
-                    globalHostWorkerSpeed = hostWorkSpeed;
-                } else {
-                    hostWorkSpeed = globalHostWorkerSpeed;
+                if(hostWorkSpeed == -1) {
+                    LOG.debug("Warning!!! Using Default hostWorker Speed because the workerSpeed wasn't available");
+                    hostWorkSpeed = 1.0;
                 }
 
                 long sleepTime = (long) ((Double.valueOf(taskDuration) / Double.valueOf(hostWorkSpeed)));
@@ -174,11 +164,7 @@ public class SimpleBackend implements BackendService.Iface {
 
                 LOG.debug("WS: " + hostWorkSpeed + "ms" + ";  Host: " + thisHost + "; sleepTime: " + sleepTime + "; taskDuration " + taskDuration);
 
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
             } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
                 e.printStackTrace();
             }
 
@@ -283,6 +269,20 @@ public class SimpleBackend implements BackendService.Iface {
         workSpeed = "";
         for (String node : slavesConfig.getStringArray(SLAVES)) {
             workSpeed = workSpeed + node + ",";
+        }
+        try {
+            thisHost = Inet4Address.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } 
+
+
+        Properties props = new Properties();
+        props.load(new StringReader(workSpeed.replace(",", "\n")));
+        for (Map.Entry<Object, Object> e : props.entrySet()) {
+            if ((String.valueOf(e.getKey())).equals(thisHost)) {
+                hostWorkSpeed = Double.valueOf((String) e.getValue());
+            }
         }
 
         // Start backend server
