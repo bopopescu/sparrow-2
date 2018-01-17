@@ -163,9 +163,9 @@ public class SimpleBackend implements BackendService.Iface {
             } catch (IOException e) {
                 LOG.fatal("Error creating NM client", e);
             }
-            int minutes = (int)(((System.currentTimeMillis() / 1000) /60) % 60  );
-	    LOG.debug("Minute is " + minutes + " worker speed is " + hostWorkSpeed);
-            if(mapAlteration.get(minutes)!=null) {
+            int minutes = (int) (((System.currentTimeMillis() / 1000) / 60) % 60);
+            LOG.debug("Minute is " + minutes + " worker speed is " + hostWorkSpeed);
+            if (mapAlteration.get(minutes) != null) {
                 hostWorkSpeed = mapAlteration.get(minutes);
             }
 
@@ -304,11 +304,11 @@ public class SimpleBackend implements BackendService.Iface {
         for (String node : slavesConfig.getStringArray(SLAVES)) {
             workSpeed = workSpeed + node + ",";
         }
-	String alteration = "";
+        String alteration = "";
         for (String altered : slavesConfig.getStringArray(ALTERATION)) {
             alteration = alteration + altered + ",";
         }
-	mapAlteration = new HashMap<Integer, Double>();
+        mapAlteration = new HashMap<Integer, Double>();
         if (alteration.equalsIgnoreCase("")) {
             LOG.debug("Empty alteration");
         } else {

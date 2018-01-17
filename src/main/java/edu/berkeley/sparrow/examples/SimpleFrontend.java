@@ -64,7 +64,7 @@ public class SimpleFrontend implements FrontendService.Iface {
     /**
      * Number of tasks per job.
      */
-    public static final String TOTAL_NO_OF_TASKS = "total_no_tasks";
+    public static final String TOTAL_NO_OF_TASKS = "total_no_of_tasks";
     public static final int DEFAULT_TOTAL_NO_OF_TASKS = 3500;
 
     public static final String LOAD = "load";
@@ -270,6 +270,8 @@ public class SimpleFrontend implements FrontendService.Iface {
 
 //            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
 //                    "; W:  " + final_worker_speeds.length + "Worker Speeds: " + final_worker_speeds.toString() + "; TOTAL TASK NUMBER: " + totalNoOfTasks);
+            LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
+                     "; TOTAL TASK NUMBER: " + totalNoOfTasks);
 
             LOG.debug("Using arrival period of " + arrivalPeriodMillis +
                     " milliseconds and running experiment for " + experimentDurationS + " seconds.");
@@ -293,17 +295,17 @@ public class SimpleFrontend implements FrontendService.Iface {
             while (System.currentTimeMillis() < startTime + experimentDurationS * 1000) {
 
                 Thread.sleep(100);
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                if (elapsedTime > 3*60*1000 && isCanceled == false) {
-                    LOG.debug("Cancelling <--");
-                    sf.cancel(true);
-                    isCanceled = true;
-                }
-                if (elapsedTime > 5 * 60 * 1000 && restarted == false) {
-                    LOG.debug("Restarting <--");
-                    sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis*2, TimeUnit.MILLISECONDS);
-                    restarted = true;
-                }
+//                long elapsedTime = System.currentTimeMillis() - startTime;
+//                if (elapsedTime > 3*60*1000 && isCanceled == false) {
+//                    LOG.debug("Cancelling <--");
+//                    sf.cancel(true);
+//                    isCanceled = true;
+//                }
+//                if (elapsedTime > 5 * 60 * 1000 && restarted == false) {
+//                    LOG.debug("Restarting <--");
+//                    sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis*2, TimeUnit.MILLISECONDS);
+//                    restarted = true;
+//                }
             }
             taskLauncher.shutdown();
         } catch (Exception e) {
