@@ -35,20 +35,20 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
-import java.util.Arrays;
+
+import java.util.*;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.apache.thrift.transport.TTransportException;
 
@@ -80,18 +80,18 @@ public class SimpleBackend implements BackendService.Iface {
     private static int nodeMonitorPort;
     private static String nodeMonitorHost = "localhost";
 
-    private static String SLIDING_WINDOW= "moving_average_size";
+    private static String SLIDING_WINDOW = "moving_average_size";
     private static int DEFAULT_SLIDING_WINDOW = 5;
 
 
-
     private static String SLAVES = "slaves";
-    private static String DEFAULT_NO_SLAVES = "slaves";
+    private static String ALTERATION = "alteration";
 
     private static Double globalHostWorkerSpeed = -1.0;
 
     private static Client client;
     private static String workSpeed;
+    private static Map<Integer, Double> mapAlteration;
     private static int slidingWindow;
 
     private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
@@ -102,7 +102,7 @@ public class SimpleBackend implements BackendService.Iface {
     private static Long[] initialMovAvgFrame;
     private static MovingAverage ma;
     // TODO Since I know the median Task Duration of the tasks
-    private static final int MEDIAN_TASK_DURATION= 100;
+    private static final int MEDIAN_TASK_DURATION = 100;
 
     /**
      * Keeps track of finished tasks.
@@ -143,11 +143,14 @@ public class SimpleBackend implements BackendService.Iface {
         private double taskDuration;
         private TFullTaskId taskId;
         private long taskStartTime;
+        private Map<Integer, Double> mapAlteration;
+        Double hostWorkSpeed = 1.0; //Initialization. The value will be replaced
 
         public TaskRunnable(String requestId, TFullTaskId taskId, ByteBuffer message) {
             this.taskStartTime = message.getLong();
             this.taskDuration = message.getDouble();
             this.taskId = taskId;
+            this.mapAlteration = SimpleBackend.mapAlteration;
         }
 
         @Override
@@ -160,26 +163,15 @@ public class SimpleBackend implements BackendService.Iface {
             } catch (IOException e) {
                 LOG.fatal("Error creating NM client", e);
             }
-
-            Double hostWorkSpeed = -1.0; //Initialization. The value will be replaced
+            int minutes = (int)(((System.currentTimeMillis() / 1000) /60) % 60  );
+	    LOG.debug("Minute is " + minutes + " worker speed is " + hostWorkSpeed);
+            if(mapAlteration.get(minutes)!=null) {
+                hostWorkSpeed = mapAlteration.get(minutes);
+            }
 
             String thisHost = null;
             try {
                 thisHost = Inet4Address.getLocalHost().getHostAddress();
-
-                //Getting rid of repeated parsing of the string
-                if (globalHostWorkerSpeed == -1.0) {
-                    Properties props = new Properties();
-                    props.load(new StringReader(workSpeed.replace(",", "\n")));
-                    for (Map.Entry<Object, Object> e : props.entrySet()) {
-                        if ((String.valueOf(e.getKey())).equals(thisHost)) {
-                            hostWorkSpeed = Double.valueOf((String) e.getValue());
-                        }
-                    }
-                    globalHostWorkerSpeed = hostWorkSpeed;
-                } else {
-                    hostWorkSpeed = globalHostWorkerSpeed;
-                }
 
                 long sleepTime = (long) ((Double.valueOf(taskDuration) / Double.valueOf(hostWorkSpeed)));
 
@@ -206,11 +198,11 @@ public class SimpleBackend implements BackendService.Iface {
             LOG.debug("Task completed in " + completionTime + "ms");
             LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
             LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
-	    //Adds the current completion time
+            //Adds the current completion time
             ma.add(completionTime);
-	    //Gets the current Moving Average
+            //Gets the current Moving Average
             double movingAverage = ma.getValue();
-            double estimatedWorkerSpeed = MEDIAN_TASK_DURATION/movingAverage;
+            double estimatedWorkerSpeed = MEDIAN_TASK_DURATION / movingAverage;
             LOG.debug("Moving Average Value in " + movingAverage + "ms");
 
             try {
@@ -287,11 +279,11 @@ public class SimpleBackend implements BackendService.Iface {
             } catch (ConfigurationException e) {
             }
         }
-        slidingWindow = conf.getInt(SLIDING_WINDOW,DEFAULT_SLIDING_WINDOW);
+        slidingWindow = conf.getInt(SLIDING_WINDOW, DEFAULT_SLIDING_WINDOW);
         initialMovAvgFrame = new Long[slidingWindow];
-    	Arrays.fill(initialMovAvgFrame, 0L);
-    	LOG.debug("Taking Sliding Window of size : " + slidingWindow);
-	    ma = new MovingAverage(initialMovAvgFrame);
+        Arrays.fill(initialMovAvgFrame, 0L);
+        LOG.debug("Taking Sliding Window of size : " + slidingWindow);
+        ma = new MovingAverage(initialMovAvgFrame);
 
         //Use this flag to retrieve the backend and worker speed mapping
         Configuration slavesConfig = new PropertiesConfiguration();
@@ -312,6 +304,24 @@ public class SimpleBackend implements BackendService.Iface {
         for (String node : slavesConfig.getStringArray(SLAVES)) {
             workSpeed = workSpeed + node + ",";
         }
+	String alteration = "";
+        for (String altered : slavesConfig.getStringArray(ALTERATION)) {
+            alteration = alteration + altered + ",";
+        }
+	mapAlteration = new HashMap<Integer, Double>();
+        if (alteration.equalsIgnoreCase("")) {
+            LOG.debug("Empty alteration");
+        } else {
+            //Create Hashmap from the string
+            //Will use this function in the util because this is being used everywhere.
+            String[] keyValuePairs = alteration.split(",");              //split the string to creat key-value pairs
+            for (String pair : keyValuePairs)                        //iterate over the pairs
+            {
+                String[] entry = pair.split(":");                   //split the pairs to get key and value
+                mapAlteration.put(Integer.valueOf(entry[0].trim()), Double.valueOf(entry[1].trim()));          //add them to the hashmap and trim whitespaces
+            }
+        }
+
 
         // Start backend server
         BackendService.Processor<BackendService.Iface> processor =
@@ -335,3 +345,4 @@ public class SimpleBackend implements BackendService.Iface {
 
     }
 }
+
