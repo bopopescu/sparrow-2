@@ -3,6 +3,7 @@ package edu.berkeley.sparrow.daemon.scheduler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.HashMap;
 
 import org.apache.commons.configuration.Configuration;
 
@@ -38,7 +39,7 @@ public interface TaskPlacer {
    * @throws IOException
    */
   Collection<TaskPlacementResponse> placeTasks(String appId,
-      String requestId, Collection<InetSocketAddress> nodes, Collection<TTaskSpec> tasks, String workerSpeedMap)
+                                               String requestId, Collection<InetSocketAddress> nodes, Collection<TTaskSpec> tasks, HashMap<String, Double> workerSpeedHashMap)
           throws IOException;
   // TODO: For performance reasons it might make sense to just have these arguments as
   //       List rather than Collection since they need to be returned as a list eventually.

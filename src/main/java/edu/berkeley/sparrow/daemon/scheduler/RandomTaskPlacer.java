@@ -3,6 +3,7 @@ package edu.berkeley.sparrow.daemon.scheduler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.configuration.Configuration;
@@ -24,7 +25,7 @@ public class RandomTaskPlacer implements TaskPlacer {
   private RandomAssignmentPolicy policy = new RandomAssignmentPolicy();
   @Override
   public Collection<TaskPlacementResponse> placeTasks(String appId,
-      String requestId, Collection<InetSocketAddress> nodes, Collection<TTaskSpec> tasks, String workerSpeedMap)
+      String requestId, Collection<InetSocketAddress> nodes, Collection<TTaskSpec> tasks, HashMap<String, Double> workerSpeedMap)
           throws IOException {
     Map<InetSocketAddress, TResourceUsage> nodeUsage = Maps.newHashMap();
     for (InetSocketAddress socket : nodes) {

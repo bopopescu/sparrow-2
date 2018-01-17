@@ -55,7 +55,7 @@ public class  ConstraintObservingProbingTaskPlacer extends ProbingTaskPlacer {
   @Override
   public Collection<TaskPlacementResponse> placeTasks(String appId,
       String requestId, Collection<InetSocketAddress> nodes,
-      Collection<TTaskSpec> tasks, String workerSpeed) throws IOException {
+      Collection<TTaskSpec> tasks, HashMap<String, Double> workerSpeedHashMap) throws IOException {
     LOG.debug("Placing constrained tasks with probe ratio: " + probesPerTask);
 
     // This approximates a "randomized over constraints" approach if we get a trivial

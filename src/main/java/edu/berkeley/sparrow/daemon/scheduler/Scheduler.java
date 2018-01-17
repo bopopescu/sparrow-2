@@ -134,8 +134,11 @@ public class Scheduler {
         this.conf = conf;
         if (mode.equals("configbased")) {
             state = new ConfigSchedulerState();
-            //constrainedPlacer = new ConstraintObservingProbingTaskPlacer();
-            constrainedPlacer = new ProbingTaskPlacer();
+            //We only care about the unconstrained one so we're currently using ProbingTaskPlacer for that
+            //This got removed but keeping the comments anyways.
+            //If per_task_sampling variable is set to true, it adds random constraints and ConstrainedObserving class is called
+            //The two preference node will be added that each task can probe to. Somehow this was in their original design
+            constrainedPlacer = new ConstraintObservingProbingTaskPlacer();
             //unconstrainedPlacer = new RandomTaskPlacer();
             unconstrainedPlacer = new ProbingTaskPlacer();
         } else {
@@ -239,14 +242,14 @@ public class Scheduler {
                     new TaskLaunchCallback(latch, client, response.getNodeAddr()));
         }
         // NOTE: Currently we just return rather than waiting for all tasks to launch
-    /*
-    try {
-      LOG.debug("Waiting for " + placement.size() + " tasks to finish launching");
-      latch.await();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    */
+        /*
+        try {
+          LOG.debug("Waiting for " + placement.size() + " tasks to finish launching");
+          latch.await();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        */
         long end = System.currentTimeMillis();
         LOG.debug("All tasks launched, returning. Total time: " + (end - start) +
                 "Probe time: " + (probeFinish - start));
@@ -399,28 +402,42 @@ public class Scheduler {
             backendList.add(backend);
         }
         boolean constrained = isConstrained(req);
-
-        if (usePerTaskSampling && !constrained) {
-            addRandomConstraints(req, backendList);
-        }
-        constrained = isConstrained(req);
-        if (usePerTaskSampling && !constrained) {
-            LOG.error("Constraints didn't get properly added to request!");
-        }
-
+        /**
+         * For Qiong: Since I modified the code for ProbingTaskPlacer, the no. of probes can be deterimined in that class
+         * itself.. so this means there doesn't need to be acheck for perTaskSampling. Whether pOT or not is determined by
+         * no. of probes defined in the sample ratio. Please double check to confirm.
+                if (usePerTaskSampling && !constrained) {
+                    addRandomConstraints(req, backendList);
+                }
+                constrained = isConstrained(req);
+                if (usePerTaskSampling && !constrained) {
+                    LOG.error("Constraints didn't get properly added to request!");
+                }
+        */
         // Fill in the resources in all tasks (if it's missing).
         for (TTaskSpec task : tasks) {
             if (task.estimatedResources == null) {
                 task.estimatedResources = new TResourceVector(0, 1);
             }
         }
+        //Parsing everytime because workerspeed is subject to change
+        workerSpeedMap = workerSpeedMap.substring(1, workerSpeedMap.length() - 1);           //remove curly brackets
+        String[] keyValuePairs = workerSpeedMap.split(",");              //split the string to create key-value pairs
+        HashMap<String, Double> workerSpeedHashMap = new HashMap<String, Double>();
+
+        for (String pair : keyValuePairs)                        //iterate over the pairs
+        {
+            String[] entry = pair.split("=");                   //split the pairs to get key and value
+            workerSpeedHashMap.put((String) entry[0].trim(), Double.valueOf(entry[1].trim()));
+        }
+
 
         if (constrained) {
             LOG.debug("CONSTRAINED");
-            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap);
+            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedHashMap);
         } else {
             LOG.debug("UNCONSTRAINED");
-            return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedMap);
+            return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedHashMap);
 
         }
     }
