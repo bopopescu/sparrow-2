@@ -178,7 +178,13 @@ public class SimpleBackend implements BackendService.Iface {
             LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
             LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
             LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
-            finishedTasks.add(taskId);
+            try {
+                client.tasksFinished(Lists.newArrayList(taskId));
+            } catch (TException e) {
+                e.printStackTrace();
+            }
+            client.getInputProtocol().getTransport().close();
+            client.getOutputProtocol().getTransport().close();
         }
     }
 
