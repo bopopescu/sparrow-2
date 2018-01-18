@@ -15,6 +15,7 @@ struct TResourceVector {
 struct TResourceUsage {
   1: TResourceVector resources; // Current resource usage
   2: i32 queueLength;           // Number of queued tasks
+  3: optional i32 fakeQueueLength; //Number of queued fake tasks
 }
 
 
@@ -50,6 +51,7 @@ struct TSchedulingRequest {
   # Hack to allow us to specify the probe ratio for certain types of requests.
   5: optional double probeRatio;
   6: string workSpeedMap;
+  7: bool isFake;
 }
 
 struct TTaskPlacement {
