@@ -444,31 +444,35 @@ public class Scheduler {
         // It then sends it to TaskPlacer
         if(learning == 1) { //When Learning is enabled
             LOG.debug("Learning Enabled");
-            for (InetSocketAddress node : backendList) {
-                if (estimatedWorkerSpeedMap.isEmpty()) {
+            if(estimatedWorkerSpeedMap.isEmpty()){
+                for (InetSocketAddress node : backendList) {
                     estimatedWorkerSpeedMap.put(node.getAddress().getHostAddress(), DEFAULT_WORKER_SPEED);
-                } else {
-                    //This is redundant. Need to check if just updating from the sendSchedulerMessage will suffice
-                    //TODO comment after checking
-                    estimatedWorkerSpeedMap.put(node.getAddress().getHostAddress(), estimatedWorkerSpeedMap.get(node.getAddress().getHostAddress()));
                 }
             }
+            //Else it takes the updated estimatedWorkerSpeedMap
             if (constrained) {
                 LOG.debug("CONSTRAINED");
                 return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, estimatedWorkerSpeedMap);
             } else {
                 LOG.debug("UNCONSTRAINED");
                 return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, estimatedWorkerSpeedMap);
-
             }
         } else {
             LOG.debug("Learning Disabled");
-            for (InetSocketAddress node : backendList) {
-                if (workerSpeedHashMap.isEmpty()) {
-                    LOG.debug("Warning!!! Assigned defeault Worker Speed");
+
+            if(workerSpeedHashMap.isEmpty()){
+                LOG.debug("Warning Default Everything to 1");
+                for (InetSocketAddress node : backendList) {
                     workerSpeedHashMap.put(node.getAddress().getHostAddress(), DEFAULT_WORKER_SPEED);
-                } else {
-                    workerSpeedHashMap.put(node.getAddress().getHostAddress(), workerSpeedHashMap.get(node.getAddress().getHostAddress()));
+                }
+            } else {
+                for (InetSocketAddress node : backendList) {
+                    if(workerSpeedHashMap.get(node.getAddress().getHostAddress())!=null) {
+                        workerSpeedHashMap.put(node.getAddress().getHostAddress(), workerSpeedHashMap.get(node.getAddress().getHostAddress()));
+                    } else {
+                        LOG.debug("WARNING!!! Could not fetch the worker Speed. Defaulting to 1");
+                        workerSpeedHashMap.put(node.getAddress().getHostAddress(), DEFAULT_WORKER_SPEED));
+                    }
                 }
             }
             if (constrained) {
