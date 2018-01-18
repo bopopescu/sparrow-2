@@ -39,6 +39,7 @@ import java.io.StringReader;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -74,6 +75,9 @@ public class SimpleFrontend implements FrontendService.Iface {
 
     public static final String LOAD = "load";
     public static final double DEFAULT_LOAD = 0.1;
+
+    public static final String FAKE_TASKS = "fake_tasks";
+    public static final int DEFAULT_FAKE_TASKS = 0;
 
     /**
      * Duration of one task, in milliseconds
@@ -141,12 +145,21 @@ public class SimpleFrontend implements FrontendService.Iface {
         private ArrayList<Double> taskDurations;
         private int i;
         private String workSpeedMap;
+        private boolean isFake;
 
         public JobLaunchRunnable(int tasksPerJob, ArrayList<Double> taskDurations, String workSpeedMap) {
             this.tasksPerJob = tasksPerJob;
             this.taskDurations = taskDurations;
             this.i = 0; //index
             this.workSpeedMap = workSpeedMap;
+        }
+
+        public void setFake(boolean isFake) {
+            this.isFake = isFake;
+        }
+
+        public boolean getFake() {
+            return this.isFake;
         }
 
         @Override
@@ -169,7 +182,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                 }
                 long start = System.currentTimeMillis();
                 try {
-                    client.submitJob(APPLICATION_ID, tasks, USER, workSpeedMap);
+                    client.submitJob(APPLICATION_ID, tasks, USER, workSpeedMap, isFake);
                 } catch (TException e) {
                     LOG.error("Scheduling request failed!", e);
                 }
@@ -248,6 +261,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             double load = conf.getDouble(LOAD, DEFAULT_LOAD);
             int totalNoOfTasks = conf.getInt(TOTAL_NO_OF_TASKS, DEFAULT_TOTAL_NO_OF_TASKS);
             int tasksPerJob = conf.getInt(TASKS_PER_JOB, DEFAULT_TASKS_PER_JOB);
+            int fakeTasks = conf.getInt(FAKE_TASKS, DEFAULT_FAKE_TASKS);
 
             double W = 0; //W is total Worker Speed in the system
             for (double m : workerSpeed) {
@@ -285,16 +299,26 @@ public class SimpleFrontend implements FrontendService.Iface {
             LOG.debug("Using arrival period of " + arrivalPeriodMillis +
                     " milliseconds and running experiment for " + experimentDurationS + " seconds.");
 
+
             int schedulerPort = conf.getInt(SCHEDULER_PORT,
                     SchedulerThrift.DEFAULT_SCHEDULER_THRIFT_PORT);
             String schedulerHost = conf.getString(SCHEDULER_HOST, DEFAULT_SCHEDULER_HOST);
             client = new SparrowFrontendClient();
             client.initialize(new InetSocketAddress(schedulerHost, schedulerPort), APPLICATION_ID, this);
-
-            //Passing workerSpeedMap as string from frontend to scheduler
-            JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
-            ScheduledThreadPoolExecutor taskLauncher = new ScheduledThreadPoolExecutor(1);
-            taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
+            ScheduledThreadPoolExecutor taskLauncher = null;
+            if(fakeTasks==0) {
+                //Passing workerSpeedMap as string from frontend to scheduler
+                JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
+                taskLauncher = new ScheduledThreadPoolExecutor(1);
+                taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
+            } else {
+                JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
+                JobLaunchRunnable runnableFake = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
+                taskLauncher = new ScheduledThreadPoolExecutor(1);
+                runnableFake.setFake(true);
+                ScheduledFuture<?> sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
+                ScheduledFuture<?> sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
+            }
 
             long startTime = System.currentTimeMillis();
             LOG.debug("sleeping");
