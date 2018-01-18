@@ -67,7 +67,8 @@ service InternalService {
   map<string, types.TResourceUsage> getLoad(1: string app, 2: string requestId);
   bool launchTask(1: binary message, 2: types.TFullTaskId taskId,
                   3: types.TUserGroupInfo user, 
-                  4: types.TResourceVector estimatedResources);
+                  4: types.TResourceVector estimatedResources,
+		  5: bool isFake);
 }
 
 service SchedulerStateStoreService {

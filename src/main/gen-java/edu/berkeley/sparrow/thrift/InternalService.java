@@ -36,7 +36,7 @@ public class InternalService {
 
     public Map<String,edu.berkeley.sparrow.thrift.TResourceUsage> getLoad(String app, String requestId) throws org.apache.thrift.TException;
 
-    public boolean launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources) throws org.apache.thrift.TException;
+    public boolean launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, boolean isFake) throws org.apache.thrift.TException;
 
   }
 
@@ -44,7 +44,7 @@ public class InternalService {
 
     public void getLoad(String app, String requestId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.getLoad_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.launchTask_call> resultHandler) throws org.apache.thrift.TException;
+    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, boolean isFake, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.launchTask_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -92,19 +92,20 @@ public class InternalService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "getLoad failed: unknown result");
     }
 
-    public boolean launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources) throws org.apache.thrift.TException
+    public boolean launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, boolean isFake) throws org.apache.thrift.TException
     {
-      send_launchTask(message, taskId, user, estimatedResources);
+      send_launchTask(message, taskId, user, estimatedResources, isFake);
       return recv_launchTask();
     }
 
-    public void send_launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources) throws org.apache.thrift.TException
+    public void send_launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, boolean isFake) throws org.apache.thrift.TException
     {
       launchTask_args args = new launchTask_args();
       args.setMessage(message);
       args.setTaskId(taskId);
       args.setUser(user);
       args.setEstimatedResources(estimatedResources);
+      args.setIsFake(isFake);
       sendBase("launchTask", args);
     }
 
@@ -171,9 +172,9 @@ public class InternalService {
       }
     }
 
-    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler) throws org.apache.thrift.TException {
+    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, boolean isFake, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      launchTask_call method_call = new launchTask_call(message, taskId, user, estimatedResources, resultHandler, this, ___protocolFactory, ___transport);
+      launchTask_call method_call = new launchTask_call(message, taskId, user, estimatedResources, isFake, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -183,12 +184,14 @@ public class InternalService {
       private edu.berkeley.sparrow.thrift.TFullTaskId taskId;
       private edu.berkeley.sparrow.thrift.TUserGroupInfo user;
       private edu.berkeley.sparrow.thrift.TResourceVector estimatedResources;
-      public launchTask_call(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private boolean isFake;
+      public launchTask_call(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, edu.berkeley.sparrow.thrift.TResourceVector estimatedResources, boolean isFake, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.message = message;
         this.taskId = taskId;
         this.user = user;
         this.estimatedResources = estimatedResources;
+        this.isFake = isFake;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -198,6 +201,7 @@ public class InternalService {
         args.setTaskId(taskId);
         args.setUser(user);
         args.setEstimatedResources(estimatedResources);
+        args.setIsFake(isFake);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -265,7 +269,7 @@ public class InternalService {
 
       public launchTask_result getResult(I iface, launchTask_args args) throws org.apache.thrift.TException {
         launchTask_result result = new launchTask_result();
-        result.success = iface.launchTask(args.message, args.taskId, args.user, args.estimatedResources);
+        result.success = iface.launchTask(args.message, args.taskId, args.user, args.estimatedResources, args.isFake);
         result.setSuccessIsSet(true);
         return result;
       }
@@ -1151,6 +1155,7 @@ public class InternalService {
     private static final org.apache.thrift.protocol.TField TASK_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("taskId", org.apache.thrift.protocol.TType.STRUCT, (short)2);
     private static final org.apache.thrift.protocol.TField USER_FIELD_DESC = new org.apache.thrift.protocol.TField("user", org.apache.thrift.protocol.TType.STRUCT, (short)3);
     private static final org.apache.thrift.protocol.TField ESTIMATED_RESOURCES_FIELD_DESC = new org.apache.thrift.protocol.TField("estimatedResources", org.apache.thrift.protocol.TType.STRUCT, (short)4);
+    private static final org.apache.thrift.protocol.TField IS_FAKE_FIELD_DESC = new org.apache.thrift.protocol.TField("isFake", org.apache.thrift.protocol.TType.BOOL, (short)5);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1162,13 +1167,15 @@ public class InternalService {
     public edu.berkeley.sparrow.thrift.TFullTaskId taskId; // required
     public edu.berkeley.sparrow.thrift.TUserGroupInfo user; // required
     public edu.berkeley.sparrow.thrift.TResourceVector estimatedResources; // required
+    public boolean isFake; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       MESSAGE((short)1, "message"),
       TASK_ID((short)2, "taskId"),
       USER((short)3, "user"),
-      ESTIMATED_RESOURCES((short)4, "estimatedResources");
+      ESTIMATED_RESOURCES((short)4, "estimatedResources"),
+      IS_FAKE((short)5, "isFake");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1191,6 +1198,8 @@ public class InternalService {
             return USER;
           case 4: // ESTIMATED_RESOURCES
             return ESTIMATED_RESOURCES;
+          case 5: // IS_FAKE
+            return IS_FAKE;
           default:
             return null;
         }
@@ -1231,6 +1240,8 @@ public class InternalService {
     }
 
     // isset id assignments
+    private static final int __ISFAKE_ISSET_ID = 0;
+    private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -1242,6 +1253,8 @@ public class InternalService {
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.sparrow.thrift.TUserGroupInfo.class)));
       tmpMap.put(_Fields.ESTIMATED_RESOURCES, new org.apache.thrift.meta_data.FieldMetaData("estimatedResources", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.sparrow.thrift.TResourceVector.class)));
+      tmpMap.put(_Fields.IS_FAKE, new org.apache.thrift.meta_data.FieldMetaData("isFake", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(launchTask_args.class, metaDataMap);
     }
@@ -1253,19 +1266,23 @@ public class InternalService {
       ByteBuffer message,
       edu.berkeley.sparrow.thrift.TFullTaskId taskId,
       edu.berkeley.sparrow.thrift.TUserGroupInfo user,
-      edu.berkeley.sparrow.thrift.TResourceVector estimatedResources)
+      edu.berkeley.sparrow.thrift.TResourceVector estimatedResources,
+      boolean isFake)
     {
       this();
       this.message = message;
       this.taskId = taskId;
       this.user = user;
       this.estimatedResources = estimatedResources;
+      this.isFake = isFake;
+      setIsFakeIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public launchTask_args(launchTask_args other) {
+      __isset_bitfield = other.__isset_bitfield;
       if (other.isSetMessage()) {
         this.message = org.apache.thrift.TBaseHelper.copyBinary(other.message);
 ;
@@ -1279,6 +1296,7 @@ public class InternalService {
       if (other.isSetEstimatedResources()) {
         this.estimatedResources = new edu.berkeley.sparrow.thrift.TResourceVector(other.estimatedResources);
       }
+      this.isFake = other.isFake;
     }
 
     public launchTask_args deepCopy() {
@@ -1290,6 +1308,8 @@ public class InternalService {
       this.taskId = null;
       this.user = null;
       this.estimatedResources = null;
+      setIsFakeIsSet(false);
+      this.isFake = false;
     }
 
     public byte[] getMessage() {
@@ -1398,6 +1418,29 @@ public class InternalService {
       }
     }
 
+    public boolean isIsFake() {
+      return this.isFake;
+    }
+
+    public launchTask_args setIsFake(boolean isFake) {
+      this.isFake = isFake;
+      setIsFakeIsSet(true);
+      return this;
+    }
+
+    public void unsetIsFake() {
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __ISFAKE_ISSET_ID);
+    }
+
+    /** Returns true if field isFake is set (has been assigned a value) and false otherwise */
+    public boolean isSetIsFake() {
+      return EncodingUtils.testBit(__isset_bitfield, __ISFAKE_ISSET_ID);
+    }
+
+    public void setIsFakeIsSet(boolean value) {
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __ISFAKE_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case MESSAGE:
@@ -1432,6 +1475,14 @@ public class InternalService {
         }
         break;
 
+      case IS_FAKE:
+        if (value == null) {
+          unsetIsFake();
+        } else {
+          setIsFake((Boolean)value);
+        }
+        break;
+
       }
     }
 
@@ -1448,6 +1499,9 @@ public class InternalService {
 
       case ESTIMATED_RESOURCES:
         return getEstimatedResources();
+
+      case IS_FAKE:
+        return Boolean.valueOf(isIsFake());
 
       }
       throw new IllegalStateException();
@@ -1468,6 +1522,8 @@ public class InternalService {
         return isSetUser();
       case ESTIMATED_RESOURCES:
         return isSetEstimatedResources();
+      case IS_FAKE:
+        return isSetIsFake();
       }
       throw new IllegalStateException();
     }
@@ -1518,6 +1574,15 @@ public class InternalService {
         if (!(this_present_estimatedResources && that_present_estimatedResources))
           return false;
         if (!this.estimatedResources.equals(that.estimatedResources))
+          return false;
+      }
+
+      boolean this_present_isFake = true;
+      boolean that_present_isFake = true;
+      if (this_present_isFake || that_present_isFake) {
+        if (!(this_present_isFake && that_present_isFake))
+          return false;
+        if (this.isFake != that.isFake)
           return false;
       }
 
@@ -1577,6 +1642,16 @@ public class InternalService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetIsFake()).compareTo(typedOther.isSetIsFake());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetIsFake()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.isFake, typedOther.isFake);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -1628,6 +1703,10 @@ public class InternalService {
         sb.append(this.estimatedResources);
       }
       first = false;
+      if (!first) sb.append(", ");
+      sb.append("isFake:");
+      sb.append(this.isFake);
+      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -1656,6 +1735,8 @@ public class InternalService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bitfield = 0;
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te.getMessage());
@@ -1715,6 +1796,14 @@ public class InternalService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 5: // IS_FAKE
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.isFake = iprot.readBool();
+                struct.setIsFakeIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -1750,6 +1839,9 @@ public class InternalService {
           struct.estimatedResources.write(oprot);
           oprot.writeFieldEnd();
         }
+        oprot.writeFieldBegin(IS_FAKE_FIELD_DESC);
+        oprot.writeBool(struct.isFake);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -1780,7 +1872,10 @@ public class InternalService {
         if (struct.isSetEstimatedResources()) {
           optionals.set(3);
         }
-        oprot.writeBitSet(optionals, 4);
+        if (struct.isSetIsFake()) {
+          optionals.set(4);
+        }
+        oprot.writeBitSet(optionals, 5);
         if (struct.isSetMessage()) {
           oprot.writeBinary(struct.message);
         }
@@ -1793,12 +1888,15 @@ public class InternalService {
         if (struct.isSetEstimatedResources()) {
           struct.estimatedResources.write(oprot);
         }
+        if (struct.isSetIsFake()) {
+          oprot.writeBool(struct.isFake);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, launchTask_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(4);
+        BitSet incoming = iprot.readBitSet(5);
         if (incoming.get(0)) {
           struct.message = iprot.readBinary();
           struct.setMessageIsSet(true);
@@ -1817,6 +1915,10 @@ public class InternalService {
           struct.estimatedResources = new edu.berkeley.sparrow.thrift.TResourceVector();
           struct.estimatedResources.read(iprot);
           struct.setEstimatedResourcesIsSet(true);
+        }
+        if (incoming.get(4)) {
+          struct.isFake = iprot.readBool();
+          struct.setIsFakeIsSet(true);
         }
       }
     }
