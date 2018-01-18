@@ -82,4 +82,7 @@ public class SparrowConf {
 
   public final static String POLICY = "policy";
   public final static int DEFAULT_POLICY= 1; //1 PSS+POT, 2 : PSS,  3 ; POT
+
+  public final static String LEARNING = "learning";
+  public final static int DEFAULT_LEARNING= 0; //1 PSS+POT, 2 : PSS,  3 ; POT
 }

@@ -19,6 +19,7 @@ package edu.berkeley.sparrow.examples;
 import com.google.common.collect.Lists;
 import edu.berkeley.sparrow.daemon.SparrowConf;
 import edu.berkeley.sparrow.daemon.nodemonitor.NodeMonitorThrift;
+import edu.berkeley.sparrow.daemon.util.MovingAverage;
 import edu.berkeley.sparrow.daemon.util.TClients;
 import edu.berkeley.sparrow.daemon.util.TServers;
 import edu.berkeley.sparrow.thrift.BackendService;
@@ -41,6 +42,7 @@ import java.io.StringReader;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
@@ -80,18 +82,32 @@ public class SimpleBackend implements BackendService.Iface {
     private static int nodeMonitorPort;
     private static String nodeMonitorHost = "localhost";
 
+    private static final String MEDIAN_TASK_DURATION = "median_task_duration";
+    private static final double DEFAULT_MEDIAN_TASK_DURATION = 100.0;
+
     private static String SLAVES = "slaves";
     private static String DEFAULT_NO_SLAVES = "slaves";
+
+    private static String SLIDING_WINDOW = "moving_average_size";
+    private static int DEFAULT_SLIDING_WINDOW = 100;
 
     private static Double hostWorkSpeed = -1.0; //Initialization. The value will be replaced
 
     private static Client client;
     private static String workSpeed;
     private static String thisHost = null;
+    private static Double medianTaskDuration;
 
     private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
     private static final ExecutorService executor =
             Executors.newFixedThreadPool(WORKER_THREADS);
+
+    //Initialize the Moving Average
+    private static Long[] initialMovAvgFrame;
+    private static MovingAverage ma;
+    // TODO Since I know the median Task Duration of the tasks Need to change this to fetch from the config
+    private static int slidingWindow;
+
 
     /**
      * Keeps track of finished tasks.
@@ -153,7 +169,7 @@ public class SimpleBackend implements BackendService.Iface {
                 //thisHost = Inet4Address.getLocalHost().getHostAddress();
 
                 //Getting rid of repeated parsing of the string
-                if(hostWorkSpeed == -1) {
+                if (hostWorkSpeed == -1) {
                     LOG.debug("Warning!!! Using Default hostWorker Speed because the workerSpeed wasn't available");
                     hostWorkSpeed = 1.0;
                 }
@@ -174,15 +190,31 @@ public class SimpleBackend implements BackendService.Iface {
 
 //          LOG.debug("Aggregate task rate: " + taskRate);
 
+            long completionTime = System.currentTimeMillis() - startTime;
+
             LOG.debug("Actual task in " + (taskDuration) + "ms");
-            LOG.debug("Task completed in " + (System.currentTimeMillis() - startTime) + "ms");
+            LOG.debug("Task completed in " + completionTime + "ms");
             LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
             LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
+            LOG.debug("CurrentTime in " + (startTime - taskStartTime) + "ms");
+
+            //Adds the current completion time
+            ma.add(completionTime);
+            //Gets the current Moving Average
+            double movingAverage = ma.getValue();
+            double estimatedWorkerSpeed = medianTaskDuration / movingAverage;
+            LOG.debug("Moving Average Value in " + movingAverage + "ms");
+
             try {
                 client.tasksFinished(Lists.newArrayList(taskId));
+                ByteBuffer message = ByteBuffer.allocate(8);
+                //Send the task Completion Time
+                message.putDouble(estimatedWorkerSpeed);
+                client.sendSchedulerMessage(taskId.appId, taskId, 0, ByteBuffer.wrap(message.array()), thisHost);
             } catch (TException e) {
                 e.printStackTrace();
             }
+
             client.getInputProtocol().getTransport().close();
             client.getOutputProtocol().getTransport().close();
         }
@@ -249,6 +281,13 @@ public class SimpleBackend implements BackendService.Iface {
             } catch (ConfigurationException e) {
             }
         }
+
+        slidingWindow = conf.getInt(SLIDING_WINDOW, DEFAULT_SLIDING_WINDOW);
+        medianTaskDuration = conf.getDouble(MEDIAN_TASK_DURATION, DEFAULT_MEDIAN_TASK_DURATION);
+        initialMovAvgFrame = new Long[slidingWindow];
+        Arrays.fill(initialMovAvgFrame, 0L);
+        LOG.debug("Taking Sliding Window of size : " + slidingWindow);
+        ma = new MovingAverage(initialMovAvgFrame);
 
         //Use this flag to retrieve the backend and worker speed mapping
         Configuration slavesConfig = new PropertiesConfiguration();

@@ -27,80 +27,86 @@ import edu.berkeley.sparrow.thrift.TUserGroupInfo;
  * {@link NodeMonitor} class and delegates most calls to that class.
  */
 public class NodeMonitorThrift implements NodeMonitorService.Iface,
-                                          InternalService.Iface {
-  // Defaults if not specified by configuration
-  public final static int DEFAULT_NM_THRIFT_PORT = 20501;
-  public final static int DEFAULT_NM_THRIFT_THREADS = 64;
-  public final static int DEFAULT_INTERNAL_THRIFT_PORT = 20502;
-  public final static int DEFAULT_INTERNAL_THRIFT_THREADS = 8;
+        InternalService.Iface {
+    // Defaults if not specified by configuration
+    public final static int DEFAULT_NM_THRIFT_PORT = 20501;
+    public final static int DEFAULT_NM_THRIFT_THREADS = 64;
+    public final static int DEFAULT_INTERNAL_THRIFT_PORT = 20502;
+    public final static int DEFAULT_INTERNAL_THRIFT_THREADS = 8;
 
-  private NodeMonitor nodeMonitor = new NodeMonitor();
-  // The socket addr (ip:port) where we listen for requests from other Sparrow daemons.
-  // Used when registering backends with the state store.
-  private InetSocketAddress internalAddr;
+    private NodeMonitor nodeMonitor = new NodeMonitor();
+    // The socket addr (ip:port) where we listen for requests from other Sparrow daemons.
+    // Used when registering backends with the state store.
+    private InetSocketAddress internalAddr;
 
-  /**
-   * Initialize this thrift service.
-   *
-   * This spawns 2 multi-threaded thrift servers, one exposing the app-facing
-   * agent service and the other exposing the internal-facing agent service,
-   * and listens for requests to both servers. We require explicit specification of the
-   * ports for these respective interfaces, since they cannot always be determined from
-   * within this class under certain configurations (e.g. a config file specifies
-   * multiple NodeMonitors).
-   */
-  public void initialize(Configuration conf, int nmPort, int internalPort)
-      throws IOException {
-    nodeMonitor.initialize(conf);
+    /**
+     * Initialize this thrift service.
+     * <p>
+     * This spawns 2 multi-threaded thrift servers, one exposing the app-facing
+     * agent service and the other exposing the internal-facing agent service,
+     * and listens for requests to both servers. We require explicit specification of the
+     * ports for these respective interfaces, since they cannot always be determined from
+     * within this class under certain configurations (e.g. a config file specifies
+     * multiple NodeMonitors).
+     */
+    public void initialize(Configuration conf, int nmPort, int internalPort)
+            throws IOException {
+        nodeMonitor.initialize(conf);
 
-    // Setup application-facing agent service.
-    NodeMonitorService.Processor<NodeMonitorService.Iface> processor =
-        new NodeMonitorService.Processor<NodeMonitorService.Iface>(this);
+        // Setup application-facing agent service.
+        NodeMonitorService.Processor<NodeMonitorService.Iface> processor =
+                new NodeMonitorService.Processor<NodeMonitorService.Iface>(this);
 
-    int threads = conf.getInt(SparrowConf.NM_THRIFT_THREADS,
-        DEFAULT_NM_THRIFT_THREADS);
-    TServers.launchThreadedThriftServer(nmPort, threads, processor);
+        int threads = conf.getInt(SparrowConf.NM_THRIFT_THREADS,
+                DEFAULT_NM_THRIFT_THREADS);
+        TServers.launchThreadedThriftServer(nmPort, threads, processor);
 
-    // Setup internal-facing agent service.
-    InternalService.Processor<InternalService.Iface> internalProcessor =
-        new InternalService.Processor<InternalService.Iface>(this);
-    int internalThreads = conf.getInt(
-        SparrowConf.INTERNAL_THRIFT_THREADS,
-        DEFAULT_INTERNAL_THRIFT_THREADS);
-    TServers.launchThreadedThriftServer(internalPort, internalThreads, internalProcessor);
+        // Setup internal-facing agent service.
+        InternalService.Processor<InternalService.Iface> internalProcessor =
+                new InternalService.Processor<InternalService.Iface>(this);
+        int internalThreads = conf.getInt(
+                SparrowConf.INTERNAL_THRIFT_THREADS,
+                DEFAULT_INTERNAL_THRIFT_THREADS);
+        TServers.launchThreadedThriftServer(internalPort, internalThreads, internalProcessor);
 
-    internalAddr = new InetSocketAddress(InetAddress.getLocalHost(), internalPort);
-  }
-
-  @Override
-  public boolean registerBackend(String app, String backendSocket) throws TException {
-    Optional<InetSocketAddress> backendAddr = Serialization.strToSocket(backendSocket);
-    if (!backendAddr.isPresent()) {
-      return false; // TODO: maybe we should throw some exception here?
+        internalAddr = new InetSocketAddress(InetAddress.getLocalHost(), internalPort);
     }
-    return nodeMonitor.registerBackend(app, internalAddr, backendAddr.get());
-  }
 
-  @Override
-  public Map<String, TResourceUsage> getLoad(String app, String requestId)
-      throws TException {
-    return nodeMonitor.getLoad(app, requestId);
-  }
+    @Override
+    public boolean registerBackend(String app, String backendSocket) throws TException {
+        Optional<InetSocketAddress> backendAddr = Serialization.strToSocket(backendSocket);
+        if (!backendAddr.isPresent()) {
+            return false; // TODO: maybe we should throw some exception here?
+        }
+        return nodeMonitor.registerBackend(app, internalAddr, backendAddr.get());
+    }
 
-  @Override
-  public boolean launchTask(ByteBuffer message, TFullTaskId taskId,
-      TUserGroupInfo user, TResourceVector estimatedResources) throws TException {
-    return nodeMonitor.launchTask(message, taskId, user, estimatedResources);
-  }
+    @Override
+    public Map<String, TResourceUsage> getLoad(String app, String requestId)
+            throws TException {
+        return nodeMonitor.getLoad(app, requestId);
+    }
 
-  @Override
-  public void sendFrontendMessage(String app, TFullTaskId taskId,
-      int status, ByteBuffer message) throws TException {
-    nodeMonitor.sendFrontendMessage(app, taskId, status, message);
-  }
+    @Override
+    public boolean launchTask(ByteBuffer message, TFullTaskId taskId,
+                              TUserGroupInfo user, TResourceVector estimatedResources) throws TException {
+        return nodeMonitor.launchTask(message, taskId, user, estimatedResources);
+    }
 
-  @Override
-  public void tasksFinished(List<TFullTaskId> tasks) throws TException {
-    nodeMonitor.tasksFinished(tasks);
-  }
+    @Override
+    public void sendFrontendMessage(String app, TFullTaskId taskId,
+                                    int status, ByteBuffer message) throws TException {
+        nodeMonitor.sendFrontendMessage(app, taskId, status, message);
+    }
+
+    @Override
+    public void sendSchedulerMessage(String app, TFullTaskId taskId,
+                                     int status, ByteBuffer message, String hostAddress) throws TException {
+        nodeMonitor.sendSchedulerMessage(app, taskId, status, message, hostAddress);
+    }
+
+    @Override
+    public void tasksFinished(List<TFullTaskId> tasks) throws TException {
+        nodeMonitor.tasksFinished(tasks);
+    }
 }

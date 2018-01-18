@@ -35,6 +35,12 @@ public class Scheduler {
     private final static Logger LOG = Logger.getLogger(Scheduler.class);
     private final static Logger AUDIT_LOG = Logging.getAuditLogger(Scheduler.class);
 
+    /** Estimated Worker Speed HashMap **/ //TODO are we continuously updating the map???
+    public static HashMap<String, Double> estimatedWorkerSpeedMap = new HashMap<String, Double>();
+
+    private final double DEFAULT_WORKER_SPEED = 1.0;
+
+
     /**
      * Used to uniquely identify requests arriving at this scheduler.
      */
@@ -90,6 +96,7 @@ public class Scheduler {
     private Configuration conf;
 
     private boolean usePerTaskSampling;
+    private int learning;
 
     /**
      * A callback handler for asynchronous task launches.
@@ -153,6 +160,7 @@ public class Scheduler {
 
         usePerTaskSampling = conf.getBoolean(SparrowConf.USE_PER_TASK_SAMPLING, true);
         LOG.debug("usePerTaskSampling set to " + usePerTaskSampling);
+        learning = conf.getInt(SparrowConf.LEARNING,SparrowConf.DEFAULT_LEARNING);
     }
 
     public boolean registerFrontend(String appId, String addr) {
@@ -431,14 +439,46 @@ public class Scheduler {
             workerSpeedHashMap.put((String) entry[0].trim(), Double.valueOf(entry[1].trim()));
         }
 
+        //If learning is enabled, it takes the updated hash map from sendScheduler message
+        //If learning is disabled, it takes the workerSpeedHash Map from the frontend
+        // It then sends it to TaskPlacer
+        if(learning == 1) { //When Learning is enabled
+            LOG.debug("Learning Enabled");
+            for (InetSocketAddress node : backendList) {
+                if (estimatedWorkerSpeedMap.isEmpty()) {
+                    estimatedWorkerSpeedMap.put(node.getAddress().getHostAddress(), DEFAULT_WORKER_SPEED);
+                } else {
+                    //This is redundant. Need to check if just updating from the sendSchedulerMessage will suffice
+                    //TODO comment after checking
+                    estimatedWorkerSpeedMap.put(node.getAddress().getHostAddress(), estimatedWorkerSpeedMap.get(node.getAddress().getHostAddress()));
+                }
+            }
+            if (constrained) {
+                LOG.debug("CONSTRAINED");
+                return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, estimatedWorkerSpeedMap);
+            } else {
+                LOG.debug("UNCONSTRAINED");
+                return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, estimatedWorkerSpeedMap);
 
-        if (constrained) {
-            LOG.debug("CONSTRAINED");
-            return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedHashMap);
+            }
         } else {
-            LOG.debug("UNCONSTRAINED");
-            return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedHashMap);
+            LOG.debug("Learning Disabled");
+            for (InetSocketAddress node : backendList) {
+                if (workerSpeedHashMap.isEmpty()) {
+                    LOG.debug("Warning!!! Assigned defeault Worker Speed");
+                    workerSpeedHashMap.put(node.getAddress().getHostAddress(), DEFAULT_WORKER_SPEED);
+                } else {
+                    workerSpeedHashMap.put(node.getAddress().getHostAddress(), workerSpeedHashMap.get(node.getAddress().getHostAddress()));
+                }
+            }
+            if (constrained) {
+                LOG.debug("CONSTRAINED");
+                return constrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedHashMap);
+            } else {
+                LOG.debug("UNCONSTRAINED");
+                return unconstrainedPlacer.placeTasks(app, requestId, backendList, tasks, workerSpeedHashMap);
 
+            }
         }
     }
 
@@ -502,4 +542,56 @@ public class Scheduler {
             LOG.error("Error launching message on frontend: " + app, e);
         }
     }
+
+
+    private class sendSchedulerMessageCallback implements
+            AsyncMethodCallback<frontendMessage_call> {
+        private InetSocketAddress frontendSocket;
+        private AsyncClient client;
+
+        public sendSchedulerMessageCallback(InetSocketAddress socket, AsyncClient client) {
+            frontendSocket = socket;
+            this.client = client;
+        }
+
+        public void onComplete(frontendMessage_call response) {
+            try {
+                frontendClientPool.returnClient(frontendSocket, client);
+            } catch (Exception e) {
+                LOG.error(e);
+            }
+        }
+
+        public void onError(Exception exception) {
+            // Do not return error client to pool
+            LOG.error(exception);
+        }
+    }
+
+
+    public void sendSchedulerMessage(String app, TFullTaskId taskId,
+                                     int status, ByteBuffer message, String hostAddress) { //TODO Find the faster way to pass things
+        LOG.debug(Logging.functionCall(app, taskId, message));
+        double workerSpeed = message.getDouble();
+        LOG.debug("THIS IS SCHEDULER where WS:--> " + workerSpeed + "Host Address: " + hostAddress);
+        estimatedWorkerSpeedMap.put(hostAddress, workerSpeed);
+        LOG.debug("THIS IS SCHEDULER where Map--> " + estimatedWorkerSpeedMap);
+        InetSocketAddress frontend = frontendSockets.get(app);
+        if (frontend == null) {
+            LOG.error("Requested message sent to unregistered app: " + app);
+            return;
+        }
+//        try {
+//            AsyncClient client = frontendClientPool.borrowClient(frontend);
+//            client.frontendMessage(taskId, status, message, hostAddress
+//                    new sendFrontendMessageCallback(frontend, client));
+//        } catch (IOException e) {
+//            LOG.error("Error launching message on frontend: " + app, e);
+//        } catch (TException e) {
+//            LOG.error("Error launching message on frontend: " + app, e);
+//        } catch (Exception e) {
+//            LOG.error("Error launching message on frontend: " + app, e);
+//        }
+    }
+
 }

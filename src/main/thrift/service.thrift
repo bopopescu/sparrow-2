@@ -24,7 +24,7 @@ service SchedulerService {
   void sendFrontendMessage(1: string app, 2: types.TFullTaskId taskId, 
                            3: i32 status, 4: binary message);
 
- void sendSchedulerMessage(1: string app, 2: types.TFullTaskId taskId,
+  void sendSchedulerMessage(1: string app, 2: types.TFullTaskId taskId,
                                3: i32 status, 4: binary message, 5: string hostAddress);
 
 }
