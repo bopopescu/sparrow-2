@@ -471,7 +471,7 @@ public class Scheduler {
                         workerSpeedHashMap.put(node.getAddress().getHostAddress(), workerSpeedHashMap.get(node.getAddress().getHostAddress()));
                     } else {
                         LOG.debug("WARNING!!! Could not fetch the worker Speed. Defaulting to 1");
-                        workerSpeedHashMap.put(node.getAddress().getHostAddress(), DEFAULT_WORKER_SPEED));
+                        workerSpeedHashMap.put(node.getAddress().getHostAddress(), DEFAULT_WORKER_SPEED);
                     }
                 }
             }
