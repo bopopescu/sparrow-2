@@ -180,8 +180,12 @@ public class SimpleBackend implements BackendService.Iface {
                 }
 
                 if(changeWorkerSpeed) {
+                    if(mapAlteration.isEmpty()){
+                        LOG.debug("Warning No value in the alterWorkSpeed File. Resetting to default");
+                    }
                     if (mapAlteration.get(minutes) != null) {
                         hostWorkSpeed = mapAlteration.get(minutes);
+                        LOG.debug("Changing workerpeed to: " + hostWorkSpeed);
                     }
                     LOG.debug("Minute is " + minutes);
                 }
@@ -209,7 +213,7 @@ public class SimpleBackend implements BackendService.Iface {
             LOG.debug("Task completed in " + completionTime + "ms");
             LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
             LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
-            LOG.debug("CurrentTime in " + (startTime - taskStartTime) + "ms");
+            LOG.debug("CurrentTime in " + System.currentTimeMillis());
 
             //Adds the current completion time
             ma.add(completionTime);
@@ -277,6 +281,8 @@ public class SimpleBackend implements BackendService.Iface {
                 withRequiredArg().ofType(String.class);
         parser.accepts("w", "configuration file").
                 withRequiredArg().ofType(String.class);
+        parser.accepts("ac", "configuration file").
+                withRequiredArg().ofType(String.class);
         parser.accepts("help", "print help statement");
         OptionSet options = parser.parse(args);
 
@@ -343,13 +349,23 @@ public class SimpleBackend implements BackendService.Iface {
         }
         changeWorkerSpeed = conf.getInt(CHANGE_WORKER_SPEED, DEFAULT_CHANGE_WORKER_SPEED);
         if (changeWorkerSpeed == 1) {
+            //Use this flag to retrieve the backend and worker speed mapping
+            Configuration alterationConfig = new PropertiesConfiguration();
+            if (options.has("ac")) {
+                String configFile = (String) options.valueOf("ac");
+                try {
+                    alterationConfig = new PropertiesConfiguration(configFile);
+                } catch (ConfigurationException e) {
+                }
+            }
             String alteration = "";
-            for (String altered : slavesConfig.getStringArray(ALTERATION)) {
+            for (String altered : alterationConfig.getStringArray(ALTERATION)) {
                 alteration = alteration + altered + ",";
             }
+
             mapAlteration = new HashMap<Integer, Double>();
             if (alteration.equalsIgnoreCase("")) {
-                LOG.debug("Empty alteration");
+                LOG.debug("Warning!!! Empty alteration");
             } else {
                 //Create Hashmap from the string
                 //Will use this function in the util because this is being used everywhere.
