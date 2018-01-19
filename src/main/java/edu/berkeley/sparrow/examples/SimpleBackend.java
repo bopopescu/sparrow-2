@@ -82,6 +82,9 @@ public class SimpleBackend implements BackendService.Iface {
     private static final String MEDIAN_TASK_DURATION = "median_task_duration";
     private static final double DEFAULT_MEDIAN_TASK_DURATION = 100.0;
 
+    private static final String ALTER_CONFIG_TIME = "alter_config_time";
+    private static final int DEFAULT_ALTER_CONFIG_TIME = 120;
+
     private static String SLAVES = "slaves";
     private static String DEFAULT_NO_SLAVES = "slaves";
     private static String ALTERATION = "alteration";
@@ -100,6 +103,7 @@ public class SimpleBackend implements BackendService.Iface {
     private static String thisHost = null;
     private static Double medianTaskDuration;
     private static int changeWorkerSpeed;
+    private static int alterConfigTime;
 
     private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
     private static final ExecutorService executor =
@@ -311,6 +315,7 @@ public class SimpleBackend implements BackendService.Iface {
         slidingWindow = conf.getInt(SLIDING_WINDOW, DEFAULT_SLIDING_WINDOW);
         medianTaskDuration = conf.getDouble(MEDIAN_TASK_DURATION, DEFAULT_MEDIAN_TASK_DURATION);
         initialMovAvgFrame = new Long[slidingWindow];
+        alterConfigTime = conf.getInt(ALTER_CONFIG_TIME, DEFAULT_ALTER_CONFIG_TIME);
         Arrays.fill(initialMovAvgFrame, 0L);
         LOG.debug("Taking Sliding Window of size : " + slidingWindow);
         ma = new MovingAverage(initialMovAvgFrame);
@@ -375,8 +380,8 @@ public class SimpleBackend implements BackendService.Iface {
                 int counter = 0;
                 for (String pair : keyValuePairs)                        //iterate over the pairs
                 {
-                    mapAlteration.put(counter, Double.valueOf(pair));          //add them to the hashmap and trim whitespaces
-                    counter = counter+ALTER_CONFIG_TIME;
+                    mapAlteration.put((int)counter/60, Double.valueOf(pair));
+                    counter = counter+alterConfigTime;
                 }
             }
             LOG.debug("Alteration Map: "+ mapAlteration.toString());
