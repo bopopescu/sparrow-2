@@ -95,7 +95,6 @@ public class SimpleBackend implements BackendService.Iface {
     private static int DEFAULT_SLIDING_WINDOW = 100;
 
     private static Double hostWorkSpeed = -1.0; //Initialization. The value will be replaced
-    private static int ALTER_CONFIG_TIME = 60; //in seconds
 
     private static Client client;
     private static String workSpeed;
