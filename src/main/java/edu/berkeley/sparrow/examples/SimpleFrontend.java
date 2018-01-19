@@ -115,6 +115,7 @@ public class SimpleFrontend implements FrontendService.Iface {
     public static Map<String, String> workSpeedMap = new HashMap<String, String>();
     //To pass different task duration to the runnable.
     static ArrayList<Double> taskDurations = new ArrayList<Double>();
+    static ArrayList<Double> taskDurationsFake = new ArrayList<Double>();
     public static Random random = new Random();
 
     //Get data from exponential Distribution with parameter lambda
@@ -285,6 +286,18 @@ public class SimpleFrontend implements FrontendService.Iface {
                 sumValue += value;
             }
 
+            //Generate Exponential Data
+            int median_task_duration1 = taskDurationMillis;
+            double lambda1 = 1.0 / median_task_duration;
+            random.setSeed(987654321);
+            double value1 = 0;
+            double sumValue1 = 0;
+            for (int lf = 0; lf < totalNoOfTasks+EXTRA_TASKS; lf++) { //Added extra tasks
+                value1 = getNext(lambda);
+                taskDurationsFake.add(value1);
+                sumValue1 += value1;
+            }
+
             double averageTaskDurationMillis = (double) sumValue / totalNoOfTasks;
 
             //Get Service Rate
@@ -318,7 +331,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                 taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
             } else {
                 JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
-                JobLaunchRunnable runnableFake = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
+                JobLaunchRunnable runnableFake = new JobLaunchRunnable(tasksPerJob, taskDurationsFake, workSpeedMap.toString());
                 taskLauncher = new ScheduledThreadPoolExecutor(1);
                 runnableFake.setFake(true);
                 ScheduledFuture<?> sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis - arrivalPeriodMillis/fakeLoadRatio, TimeUnit.MILLISECONDS);

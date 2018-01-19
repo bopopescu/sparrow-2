@@ -42,10 +42,7 @@ import java.io.StringReader;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -87,6 +84,9 @@ public class SimpleBackend implements BackendService.Iface {
 
     private static String SLAVES = "slaves";
     private static String DEFAULT_NO_SLAVES = "slaves";
+    private static String ALTERATION = "alteration";
+    private static final String CHANGE_WORKER_SPEED = "change_worker_speed";
+    private static final int DEFAULT_CHANGE_WORKER_SPEED = 0; // Don't turn on by default
 
     private static String SLIDING_WINDOW = "moving_average_size";
     private static int DEFAULT_SLIDING_WINDOW = 100;
@@ -95,8 +95,10 @@ public class SimpleBackend implements BackendService.Iface {
 
     private static Client client;
     private static String workSpeed;
+    private static Map<Integer, Double> mapAlteration;
     private static String thisHost = null;
     private static Double medianTaskDuration;
+    private static int changeWorkerSpeed;
 
     private static final Logger LOG = Logger.getLogger(SimpleBackend.class);
     private static final ExecutorService executor =
@@ -148,11 +150,13 @@ public class SimpleBackend implements BackendService.Iface {
         private double taskDuration;
         private TFullTaskId taskId;
         private long taskStartTime;
+        private boolean changeWorkerSpeed;
 
-        public TaskRunnable(String requestId, TFullTaskId taskId, ByteBuffer message) {
+        public TaskRunnable(String requestId, TFullTaskId taskId, ByteBuffer message, boolean changeWorkerSpeed) {
             this.taskStartTime = message.getLong();
             this.taskDuration = message.getDouble();
             this.taskId = taskId;
+            this.changeWorkerSpeed = changeWorkerSpeed;
         }
 
         @Override
@@ -167,12 +171,21 @@ public class SimpleBackend implements BackendService.Iface {
 
             try {
                 //thisHost = Inet4Address.getLocalHost().getHostAddress();
+                int minutes = (int) (((System.currentTimeMillis() / 1000) / 60) % 60);
 
                 //Getting rid of repeated parsing of the string
                 if (hostWorkSpeed == -1) {
                     LOG.debug("Warning!!! Using Default hostWorker Speed because the workerSpeed wasn't available");
                     hostWorkSpeed = 1.0;
                 }
+
+                if(changeWorkerSpeed) {
+                    if (mapAlteration.get(minutes) != null) {
+                        hostWorkSpeed = mapAlteration.get(minutes);
+                    }
+                    LOG.debug("Minute is " + minutes);
+                }
+
 
                 long sleepTime = (long) ((Double.valueOf(taskDuration) / Double.valueOf(hostWorkSpeed)));
 
@@ -247,9 +260,15 @@ public class SimpleBackend implements BackendService.Iface {
     public void launchTask(ByteBuffer message, TFullTaskId taskId,
                            TUserGroupInfo user) throws TException {
         //LOG.info("Submitting task " + taskId.getTaskId() + " at " + System.currentTimeMillis());
-
-        executor.submit(new TaskRunnable(
-                taskId.requestId, taskId, message));
+        if(changeWorkerSpeed == 0) {
+            LOG.debug("Runs normally without altering worker Speed");
+            executor.submit(new TaskRunnable(
+                    taskId.requestId, taskId, message, false));
+        } else {
+            LOG.debug("Runs by altering worker Speed");
+            executor.submit(new TaskRunnable(
+                    taskId.requestId, taskId, message, true));
+        }
     }
 
     public static void main(String[] args) throws IOException, TException {
@@ -320,6 +339,26 @@ public class SimpleBackend implements BackendService.Iface {
         for (Map.Entry<Object, Object> e : props.entrySet()) {
             if ((String.valueOf(e.getKey())).equals(thisHost)) {
                 hostWorkSpeed = Double.valueOf((String) e.getValue());
+            }
+        }
+        changeWorkerSpeed = conf.getInt(CHANGE_WORKER_SPEED, DEFAULT_CHANGE_WORKER_SPEED);
+        if (changeWorkerSpeed == 1) {
+            String alteration = "";
+            for (String altered : slavesConfig.getStringArray(ALTERATION)) {
+                alteration = alteration + altered + ",";
+            }
+            mapAlteration = new HashMap<Integer, Double>();
+            if (alteration.equalsIgnoreCase("")) {
+                LOG.debug("Empty alteration");
+            } else {
+                //Create Hashmap from the string
+                //Will use this function in the util because this is being used everywhere.
+                String[] keyValuePairs = alteration.split(",");              //split the string to creat key-value pairs
+                for (String pair : keyValuePairs)                        //iterate over the pairs
+                {
+                    String[] entry = pair.split(":");                   //split the pairs to get key and value
+                    mapAlteration.put(Integer.valueOf(entry[0].trim()), Double.valueOf(entry[1].trim()));          //add them to the hashmap and trim whitespaces
+                }
             }
         }
 
