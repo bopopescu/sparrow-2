@@ -92,6 +92,7 @@ public class SimpleBackend implements BackendService.Iface {
     private static int DEFAULT_SLIDING_WINDOW = 100;
 
     private static Double hostWorkSpeed = -1.0; //Initialization. The value will be replaced
+    private static int ALTER_CONFIG_TIME = 60; //in seconds
 
     private static Client client;
     private static String workSpeed;
@@ -179,8 +180,8 @@ public class SimpleBackend implements BackendService.Iface {
                     hostWorkSpeed = 1.0;
                 }
 
-                if(changeWorkerSpeed) {
-                    if(mapAlteration.isEmpty()){
+                if (changeWorkerSpeed) {
+                    if (mapAlteration.isEmpty()) {
                         LOG.debug("Warning No value in the alterWorkSpeed File. Resetting to default");
                     }
                     if (mapAlteration.get(minutes) != null) {
@@ -264,7 +265,7 @@ public class SimpleBackend implements BackendService.Iface {
     public void launchTask(ByteBuffer message, TFullTaskId taskId,
                            TUserGroupInfo user) throws TException {
         //LOG.info("Submitting task " + taskId.getTaskId() + " at " + System.currentTimeMillis());
-        if(changeWorkerSpeed == 0) {
+        if (changeWorkerSpeed == 0) {
             LOG.debug("Runs normally without altering worker Speed");
             executor.submit(new TaskRunnable(
                     taskId.requestId, taskId, message, false));
@@ -358,8 +359,9 @@ public class SimpleBackend implements BackendService.Iface {
                 } catch (ConfigurationException e) {
                 }
             }
+
             String alteration = "";
-            for (String altered : alterationConfig.getStringArray(ALTERATION)) {
+            for (String altered : alterationConfig.getStringArray(thisHost)) {
                 alteration = alteration + altered + ",";
             }
 
@@ -370,12 +372,14 @@ public class SimpleBackend implements BackendService.Iface {
                 //Create Hashmap from the string
                 //Will use this function in the util because this is being used everywhere.
                 String[] keyValuePairs = alteration.split(",");              //split the string to creat key-value pairs
+                int counter = 0;
                 for (String pair : keyValuePairs)                        //iterate over the pairs
                 {
-                    String[] entry = pair.split(":");                   //split the pairs to get key and value
-                    mapAlteration.put(Integer.valueOf(entry[0].trim()), Double.valueOf(entry[1].trim()));          //add them to the hashmap and trim whitespaces
+                    mapAlteration.put(counter, Double.valueOf(pair));          //add them to the hashmap and trim whitespaces
+                    counter = counter+ALTER_CONFIG_TIME;
                 }
             }
+            LOG.debug("Alteration Map: "+ mapAlteration.toString());
         }
 
         // Start backend server
