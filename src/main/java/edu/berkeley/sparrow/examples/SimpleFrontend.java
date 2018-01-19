@@ -294,33 +294,30 @@ public class SimpleFrontend implements FrontendService.Iface {
             long arrivalPeriodMillisFake;
             long arrivalPeriodMillisReal;
             long arrivalPeriodMillis;
+            String[] entry = fakeLoadRatio.split(":");
+            if(entry.length == 2){
+                realLoad=Double.valueOf(entry[0].trim());
+                fakeLoad= Double.valueOf(entry[1].trim());
+                if(fakeLoad+realLoad>=1){
+                    LOG.debug("Warning Load >=1");
+                }
+            } else {
+                LOG.debug("Warning!!! Using default Load");
+                realLoad = 0.1;
+                fakeLoad =0.2;
+            }
 
             if (fakeTasks ==1){
                 LOG.debug("Enabling Fake Tasks");
-                String[] entry = fakeLoadRatio.split(":");
-                if(entry.length == 2){
-                    realLoad=Double.valueOf(entry[0].trim());
-                    fakeLoad= Double.valueOf(entry[1].trim());
-                    if(fakeLoad+realLoad>=1){
-                        LOG.debug("Warning Load >=1");
-                    }
-                } else {
-                    LOG.debug("Warning!!! Using default Load");
-                    realLoad = 0.1;
-                    fakeLoad =0.2;
-                }
-
                 double value = 0;
-                double sumValue = 0; //Can exclude this
+
                 //keep producing tasks, we'll cut off based on how long we want to run the experiment
                 for (int l = 0; l < totalNoOfTasks+EXTRA_TASKS; l++) { //Added extra tasks
                     value = getNext(lambda);
                     taskDurations.add(value);
-                    sumValue += value;
                 }
 
                 double value1 = 0;
-                double sumValue1 = 0;
                 for (int lf = totalNoOfTasks ; lf < (totalNoOfTasks*2)+EXTRA_TASKS; lf++) { //Added extra tasks
                     value1 = getNext(lambda);
                     taskDurationsFake.add(value1);
@@ -357,6 +354,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                 ScheduledFuture<?> sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillisFake, TimeUnit.MILLISECONDS);
 
             } else {
+                load = realLoad;
                 LOG.debug("Disabling Fake Tasks");
                 double value = 0;
                 double sumValue = 0;
