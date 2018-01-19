@@ -136,7 +136,8 @@ public class NodeMonitor {
     public void tasksFinished(List<TFullTaskId> tasks) {
         LOG.debug(Logging.functionCall(tasks));
         scheduler.tasksFinished(tasks);
-        LOG.debug("QueueLength is " + (scheduler.getResourceUsage(tasks.get(0).getAppId()).getQueueLength()));
+        LOG.debug("QueueLength is " + (scheduler.getResourceUsage(tasks.get(0).appId).queueLength));
+        LOG.debug("FakeQueueLength is " + (scheduler.getResourceUsage(tasks.get(0).appId).fakeQueueLength));
     }
 
     /**
@@ -145,7 +146,7 @@ public class NodeMonitor {
      * @param schedulerAddress
      */
     public boolean launchTask(ByteBuffer message, TFullTaskId taskId,
-                              TUserGroupInfo user, TResourceVector estimatedResources)
+                              TUserGroupInfo user, TResourceVector estimatedResources, boolean isFake)
             throws TException {
         LOG.debug(Logging.functionCall(message, taskId, user, estimatedResources));
 
@@ -169,7 +170,7 @@ public class NodeMonitor {
             return false;
         }
         scheduler.submitTask(scheduler.new TaskDescription(taskId, message,
-                estimatedResources, user, socket), taskId.appId);
+                estimatedResources, user, socket), taskId.appId, isFake);
         return true;
     }
 

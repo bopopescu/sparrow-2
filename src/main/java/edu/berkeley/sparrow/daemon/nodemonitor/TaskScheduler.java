@@ -123,11 +123,11 @@ public abstract class TaskScheduler {
     handleTaskCompleted(taskId);
   }
 
-   void submitTask(TaskDescription task, String appId) {
+   void submitTask(TaskDescription task, String appId, boolean isFake) {
     AUDIT_LOG.info(Logging.auditEventString("nodemonitor_task_submitted", ipAddress,
         task.taskId.requestId, task.taskId.taskId));
     resourcesPerTask.put(task.taskId, task.estimatedResources);
-    handleSubmitTask(task, appId);
+    handleSubmitTask(task, appId, isFake);
   }
 
   protected synchronized void addResourceInUse(TResourceVector nowInUse) {
@@ -157,7 +157,7 @@ public abstract class TaskScheduler {
   /**
    * Submit a task to the scheduler.
    */
-  abstract void handleSubmitTask(TaskDescription task, String appId);
+  abstract void handleSubmitTask(TaskDescription task, String appId, boolean isFake);
 
   /**
    * Signal that a given task has completed.

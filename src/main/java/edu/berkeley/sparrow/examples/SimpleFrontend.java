@@ -79,6 +79,10 @@ public class SimpleFrontend implements FrontendService.Iface {
     public static final String FAKE_TASKS = "fake_tasks";
     public static final int DEFAULT_FAKE_TASKS = 0;
 
+    public static final String FAKE_LOAD_RATIO = "fake_load";
+    public static final int DEFAULT_FAKE_LOAD_RATIO = 3;
+
+
     /**
      * Duration of one task, in milliseconds
      */
@@ -262,6 +266,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             int totalNoOfTasks = conf.getInt(TOTAL_NO_OF_TASKS, DEFAULT_TOTAL_NO_OF_TASKS);
             int tasksPerJob = conf.getInt(TASKS_PER_JOB, DEFAULT_TASKS_PER_JOB);
             int fakeTasks = conf.getInt(FAKE_TASKS, DEFAULT_FAKE_TASKS);
+            int fakeLoadRatio= conf.getInt(FAKE_LOAD_RATIO, DEFAULT_FAKE_LOAD_RATIO);
 
             double W = 0; //W is total Worker Speed in the system
             for (double m : workerSpeed) {
@@ -316,8 +321,8 @@ public class SimpleFrontend implements FrontendService.Iface {
                 JobLaunchRunnable runnableFake = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
                 taskLauncher = new ScheduledThreadPoolExecutor(1);
                 runnableFake.setFake(true);
-                ScheduledFuture<?> sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
-                ScheduledFuture<?> sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
+                ScheduledFuture<?> sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis - arrivalPeriodMillis/fakeLoadRatio, TimeUnit.MILLISECONDS);
+                ScheduledFuture<?> sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillis/fakeLoadRatio, TimeUnit.MILLISECONDS);
             }
 
             long startTime = System.currentTimeMillis();
