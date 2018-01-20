@@ -37,7 +37,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
   private static final org.apache.thrift.protocol.TField REQUEST_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("requestId", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField APP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("appId", org.apache.thrift.protocol.TType.STRING, (short)3);
   private static final org.apache.thrift.protocol.TField FRONTEND_SOCKET_FIELD_DESC = new org.apache.thrift.protocol.TField("frontendSocket", org.apache.thrift.protocol.TType.STRING, (short)4);
-  private static final org.apache.thrift.protocol.TField IS_FAKE_FIELD_DESC = new org.apache.thrift.protocol.TField("isFake", org.apache.thrift.protocol.TType.BOOL, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -49,15 +48,13 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
   public String requestId; // required
   public String appId; // required
   public String frontendSocket; // required
-  public boolean isFake; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     TASK_ID((short)1, "taskId"),
     REQUEST_ID((short)2, "requestId"),
     APP_ID((short)3, "appId"),
-    FRONTEND_SOCKET((short)4, "frontendSocket"),
-    IS_FAKE((short)5, "isFake");
+    FRONTEND_SOCKET((short)4, "frontendSocket");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -80,8 +77,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
           return APP_ID;
         case 4: // FRONTEND_SOCKET
           return FRONTEND_SOCKET;
-        case 5: // IS_FAKE
-          return IS_FAKE;
         default:
           return null;
       }
@@ -122,8 +117,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
   }
 
   // isset id assignments
-  private static final int __ISFAKE_ISSET_ID = 0;
-  private byte __isset_bitfield = 0;
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -135,8 +128,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.FRONTEND_SOCKET, new org.apache.thrift.meta_data.FieldMetaData("frontendSocket", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.IS_FAKE, new org.apache.thrift.meta_data.FieldMetaData("isFake", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TFullTaskId.class, metaDataMap);
   }
@@ -148,23 +139,19 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
     String taskId,
     String requestId,
     String appId,
-    String frontendSocket,
-    boolean isFake)
+    String frontendSocket)
   {
     this();
     this.taskId = taskId;
     this.requestId = requestId;
     this.appId = appId;
     this.frontendSocket = frontendSocket;
-    this.isFake = isFake;
-    setIsFakeIsSet(true);
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public TFullTaskId(TFullTaskId other) {
-    __isset_bitfield = other.__isset_bitfield;
     if (other.isSetTaskId()) {
       this.taskId = other.taskId;
     }
@@ -177,7 +164,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
     if (other.isSetFrontendSocket()) {
       this.frontendSocket = other.frontendSocket;
     }
-    this.isFake = other.isFake;
   }
 
   public TFullTaskId deepCopy() {
@@ -189,8 +175,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
     this.requestId = null;
     this.appId = null;
     this.frontendSocket = null;
-    setIsFakeIsSet(false);
-    this.isFake = false;
   }
 
   public String getTaskId() {
@@ -289,29 +273,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
     }
   }
 
-  public boolean isIsFake() {
-    return this.isFake;
-  }
-
-  public TFullTaskId setIsFake(boolean isFake) {
-    this.isFake = isFake;
-    setIsFakeIsSet(true);
-    return this;
-  }
-
-  public void unsetIsFake() {
-    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __ISFAKE_ISSET_ID);
-  }
-
-  /** Returns true if field isFake is set (has been assigned a value) and false otherwise */
-  public boolean isSetIsFake() {
-    return EncodingUtils.testBit(__isset_bitfield, __ISFAKE_ISSET_ID);
-  }
-
-  public void setIsFakeIsSet(boolean value) {
-    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __ISFAKE_ISSET_ID, value);
-  }
-
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case TASK_ID:
@@ -346,14 +307,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
       }
       break;
 
-    case IS_FAKE:
-      if (value == null) {
-        unsetIsFake();
-      } else {
-        setIsFake((Boolean)value);
-      }
-      break;
-
     }
   }
 
@@ -370,9 +323,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
 
     case FRONTEND_SOCKET:
       return getFrontendSocket();
-
-    case IS_FAKE:
-      return Boolean.valueOf(isIsFake());
 
     }
     throw new IllegalStateException();
@@ -393,8 +343,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
       return isSetAppId();
     case FRONTEND_SOCKET:
       return isSetFrontendSocket();
-    case IS_FAKE:
-      return isSetIsFake();
     }
     throw new IllegalStateException();
   }
@@ -445,15 +393,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
       if (!(this_present_frontendSocket && that_present_frontendSocket))
         return false;
       if (!this.frontendSocket.equals(that.frontendSocket))
-        return false;
-    }
-
-    boolean this_present_isFake = true;
-    boolean that_present_isFake = true;
-    if (this_present_isFake || that_present_isFake) {
-      if (!(this_present_isFake && that_present_isFake))
-        return false;
-      if (this.isFake != that.isFake)
         return false;
     }
 
@@ -513,16 +452,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetIsFake()).compareTo(typedOther.isSetIsFake());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    if (isSetIsFake()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.isFake, typedOther.isFake);
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-    }
     return 0;
   }
 
@@ -574,10 +503,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
       sb.append(this.frontendSocket);
     }
     first = false;
-    if (!first) sb.append(", ");
-    sb.append("isFake:");
-    sb.append(this.isFake);
-    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -597,8 +522,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
-      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-      __isset_bitfield = 0;
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te.getMessage());
@@ -655,14 +578,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 5: // IS_FAKE
-            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
-              struct.isFake = iprot.readBool();
-              struct.setIsFakeIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -698,9 +613,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
         oprot.writeString(struct.frontendSocket);
         oprot.writeFieldEnd();
       }
-      oprot.writeFieldBegin(IS_FAKE_FIELD_DESC);
-      oprot.writeBool(struct.isFake);
-      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -731,10 +643,7 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
       if (struct.isSetFrontendSocket()) {
         optionals.set(3);
       }
-      if (struct.isSetIsFake()) {
-        optionals.set(4);
-      }
-      oprot.writeBitSet(optionals, 5);
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetTaskId()) {
         oprot.writeString(struct.taskId);
       }
@@ -747,15 +656,12 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
       if (struct.isSetFrontendSocket()) {
         oprot.writeString(struct.frontendSocket);
       }
-      if (struct.isSetIsFake()) {
-        oprot.writeBool(struct.isFake);
-      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TFullTaskId struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(5);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.taskId = iprot.readString();
         struct.setTaskIdIsSet(true);
@@ -771,10 +677,6 @@ public class TFullTaskId implements org.apache.thrift.TBase<TFullTaskId, TFullTa
       if (incoming.get(3)) {
         struct.frontendSocket = iprot.readString();
         struct.setFrontendSocketIsSet(true);
-      }
-      if (incoming.get(4)) {
-        struct.isFake = iprot.readBool();
-        struct.setIsFakeIsSet(true);
       }
     }
   }

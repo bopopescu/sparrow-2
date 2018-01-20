@@ -37,6 +37,7 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
   private static final org.apache.thrift.protocol.TField PREFERENCE_FIELD_DESC = new org.apache.thrift.protocol.TField("preference", org.apache.thrift.protocol.TType.STRUCT, (short)2);
   private static final org.apache.thrift.protocol.TField ESTIMATED_RESOURCES_FIELD_DESC = new org.apache.thrift.protocol.TField("estimatedResources", org.apache.thrift.protocol.TType.STRUCT, (short)3);
   private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField IS_FAKE_FIELD_DESC = new org.apache.thrift.protocol.TField("isFake", org.apache.thrift.protocol.TType.BOOL, (short)5);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -48,13 +49,15 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
   public TPlacementPreference preference; // required
   public TResourceVector estimatedResources; // required
   public ByteBuffer message; // optional
+  public boolean isFake; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     TASK_ID((short)1, "taskId"),
     PREFERENCE((short)2, "preference"),
     ESTIMATED_RESOURCES((short)3, "estimatedResources"),
-    MESSAGE((short)4, "message");
+    MESSAGE((short)4, "message"),
+    IS_FAKE((short)5, "isFake");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -77,6 +80,8 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
           return ESTIMATED_RESOURCES;
         case 4: // MESSAGE
           return MESSAGE;
+        case 5: // IS_FAKE
+          return IS_FAKE;
         default:
           return null;
       }
@@ -117,6 +122,8 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
   }
 
   // isset id assignments
+  private static final int __ISFAKE_ISSET_ID = 0;
+  private byte __isset_bitfield = 0;
   private _Fields optionals[] = {_Fields.MESSAGE};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -129,6 +136,8 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TResourceVector.class)));
     tmpMap.put(_Fields.MESSAGE, new org.apache.thrift.meta_data.FieldMetaData("message", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
+    tmpMap.put(_Fields.IS_FAKE, new org.apache.thrift.meta_data.FieldMetaData("isFake", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TTaskSpec.class, metaDataMap);
   }
@@ -139,18 +148,22 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
   public TTaskSpec(
     String taskId,
     TPlacementPreference preference,
-    TResourceVector estimatedResources)
+    TResourceVector estimatedResources,
+    boolean isFake)
   {
     this();
     this.taskId = taskId;
     this.preference = preference;
     this.estimatedResources = estimatedResources;
+    this.isFake = isFake;
+    setIsFakeIsSet(true);
   }
 
   /**
    * Performs a deep copy on <i>other</i>.
    */
   public TTaskSpec(TTaskSpec other) {
+    __isset_bitfield = other.__isset_bitfield;
     if (other.isSetTaskId()) {
       this.taskId = other.taskId;
     }
@@ -164,6 +177,7 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
       this.message = org.apache.thrift.TBaseHelper.copyBinary(other.message);
 ;
     }
+    this.isFake = other.isFake;
   }
 
   public TTaskSpec deepCopy() {
@@ -175,6 +189,8 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
     this.preference = null;
     this.estimatedResources = null;
     this.message = null;
+    setIsFakeIsSet(false);
+    this.isFake = false;
   }
 
   public String getTaskId() {
@@ -283,6 +299,29 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
     }
   }
 
+  public boolean isIsFake() {
+    return this.isFake;
+  }
+
+  public TTaskSpec setIsFake(boolean isFake) {
+    this.isFake = isFake;
+    setIsFakeIsSet(true);
+    return this;
+  }
+
+  public void unsetIsFake() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __ISFAKE_ISSET_ID);
+  }
+
+  /** Returns true if field isFake is set (has been assigned a value) and false otherwise */
+  public boolean isSetIsFake() {
+    return EncodingUtils.testBit(__isset_bitfield, __ISFAKE_ISSET_ID);
+  }
+
+  public void setIsFakeIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __ISFAKE_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case TASK_ID:
@@ -317,6 +356,14 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
       }
       break;
 
+    case IS_FAKE:
+      if (value == null) {
+        unsetIsFake();
+      } else {
+        setIsFake((Boolean)value);
+      }
+      break;
+
     }
   }
 
@@ -333,6 +380,9 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
 
     case MESSAGE:
       return getMessage();
+
+    case IS_FAKE:
+      return Boolean.valueOf(isIsFake());
 
     }
     throw new IllegalStateException();
@@ -353,6 +403,8 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
       return isSetEstimatedResources();
     case MESSAGE:
       return isSetMessage();
+    case IS_FAKE:
+      return isSetIsFake();
     }
     throw new IllegalStateException();
   }
@@ -403,6 +455,15 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
       if (!(this_present_message && that_present_message))
         return false;
       if (!this.message.equals(that.message))
+        return false;
+    }
+
+    boolean this_present_isFake = true;
+    boolean that_present_isFake = true;
+    if (this_present_isFake || that_present_isFake) {
+      if (!(this_present_isFake && that_present_isFake))
+        return false;
+      if (this.isFake != that.isFake)
         return false;
     }
 
@@ -462,6 +523,16 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetIsFake()).compareTo(typedOther.isSetIsFake());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetIsFake()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.isFake, typedOther.isFake);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -515,6 +586,10 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
       }
       first = false;
     }
+    if (!first) sb.append(", ");
+    sb.append("isFake:");
+    sb.append(this.isFake);
+    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -540,6 +615,8 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bitfield = 0;
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te.getMessage());
@@ -598,6 +675,14 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 5: // IS_FAKE
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.isFake = iprot.readBool();
+              struct.setIsFakeIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -635,6 +720,9 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
           oprot.writeFieldEnd();
         }
       }
+      oprot.writeFieldBegin(IS_FAKE_FIELD_DESC);
+      oprot.writeBool(struct.isFake);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -665,7 +753,10 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
       if (struct.isSetMessage()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetIsFake()) {
+        optionals.set(4);
+      }
+      oprot.writeBitSet(optionals, 5);
       if (struct.isSetTaskId()) {
         oprot.writeString(struct.taskId);
       }
@@ -678,12 +769,15 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
       if (struct.isSetMessage()) {
         oprot.writeBinary(struct.message);
       }
+      if (struct.isSetIsFake()) {
+        oprot.writeBool(struct.isFake);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TTaskSpec struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(5);
       if (incoming.get(0)) {
         struct.taskId = iprot.readString();
         struct.setTaskIdIsSet(true);
@@ -701,6 +795,10 @@ public class TTaskSpec implements org.apache.thrift.TBase<TTaskSpec, TTaskSpec._
       if (incoming.get(3)) {
         struct.message = iprot.readBinary();
         struct.setMessageIsSet(true);
+      }
+      if (incoming.get(4)) {
+        struct.isFake = iprot.readBool();
+        struct.setIsFakeIsSet(true);
       }
     }
   }
