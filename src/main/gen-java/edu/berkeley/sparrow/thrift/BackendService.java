@@ -34,13 +34,13 @@ public class BackendService {
 
   public interface Iface {
 
-    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user) throws org.apache.thrift.TException;
+    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, boolean isFake) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.launchTask_call> resultHandler) throws org.apache.thrift.TException;
+    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, boolean isFake, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.launchTask_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -64,18 +64,19 @@ public class BackendService {
       super(iprot, oprot);
     }
 
-    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user) throws org.apache.thrift.TException
+    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, boolean isFake) throws org.apache.thrift.TException
     {
-      send_launchTask(message, taskId, user);
+      send_launchTask(message, taskId, user, isFake);
       recv_launchTask();
     }
 
-    public void send_launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user) throws org.apache.thrift.TException
+    public void send_launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, boolean isFake) throws org.apache.thrift.TException
     {
       launchTask_args args = new launchTask_args();
       args.setMessage(message);
       args.setTaskId(taskId);
       args.setUser(user);
+      args.setIsFake(isFake);
       sendBase("launchTask", args);
     }
 
@@ -104,9 +105,9 @@ public class BackendService {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler) throws org.apache.thrift.TException {
+    public void launchTask(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, boolean isFake, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      launchTask_call method_call = new launchTask_call(message, taskId, user, resultHandler, this, ___protocolFactory, ___transport);
+      launchTask_call method_call = new launchTask_call(message, taskId, user, isFake, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -115,11 +116,13 @@ public class BackendService {
       private ByteBuffer message;
       private edu.berkeley.sparrow.thrift.TFullTaskId taskId;
       private edu.berkeley.sparrow.thrift.TUserGroupInfo user;
-      public launchTask_call(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private boolean isFake;
+      public launchTask_call(ByteBuffer message, edu.berkeley.sparrow.thrift.TFullTaskId taskId, edu.berkeley.sparrow.thrift.TUserGroupInfo user, boolean isFake, org.apache.thrift.async.AsyncMethodCallback<launchTask_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.message = message;
         this.taskId = taskId;
         this.user = user;
+        this.isFake = isFake;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -128,6 +131,7 @@ public class BackendService {
         args.setMessage(message);
         args.setTaskId(taskId);
         args.setUser(user);
+        args.setIsFake(isFake);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -174,7 +178,7 @@ public class BackendService {
 
       public launchTask_result getResult(I iface, launchTask_args args) throws org.apache.thrift.TException {
         launchTask_result result = new launchTask_result();
-        iface.launchTask(args.message, args.taskId, args.user);
+        iface.launchTask(args.message, args.taskId, args.user, args.isFake);
         return result;
       }
     }
@@ -187,6 +191,7 @@ public class BackendService {
     private static final org.apache.thrift.protocol.TField MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("message", org.apache.thrift.protocol.TType.STRING, (short)1);
     private static final org.apache.thrift.protocol.TField TASK_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("taskId", org.apache.thrift.protocol.TType.STRUCT, (short)2);
     private static final org.apache.thrift.protocol.TField USER_FIELD_DESC = new org.apache.thrift.protocol.TField("user", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+    private static final org.apache.thrift.protocol.TField IS_FAKE_FIELD_DESC = new org.apache.thrift.protocol.TField("isFake", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -197,12 +202,14 @@ public class BackendService {
     public ByteBuffer message; // required
     public edu.berkeley.sparrow.thrift.TFullTaskId taskId; // required
     public edu.berkeley.sparrow.thrift.TUserGroupInfo user; // required
+    public boolean isFake; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       MESSAGE((short)1, "message"),
       TASK_ID((short)2, "taskId"),
-      USER((short)3, "user");
+      USER((short)3, "user"),
+      IS_FAKE((short)4, "isFake");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -223,6 +230,8 @@ public class BackendService {
             return TASK_ID;
           case 3: // USER
             return USER;
+          case 4: // IS_FAKE
+            return IS_FAKE;
           default:
             return null;
         }
@@ -263,6 +272,8 @@ public class BackendService {
     }
 
     // isset id assignments
+    private static final int __ISFAKE_ISSET_ID = 0;
+    private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -272,6 +283,8 @@ public class BackendService {
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.sparrow.thrift.TFullTaskId.class)));
       tmpMap.put(_Fields.USER, new org.apache.thrift.meta_data.FieldMetaData("user", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, edu.berkeley.sparrow.thrift.TUserGroupInfo.class)));
+      tmpMap.put(_Fields.IS_FAKE, new org.apache.thrift.meta_data.FieldMetaData("isFake", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(launchTask_args.class, metaDataMap);
     }
@@ -282,18 +295,22 @@ public class BackendService {
     public launchTask_args(
       ByteBuffer message,
       edu.berkeley.sparrow.thrift.TFullTaskId taskId,
-      edu.berkeley.sparrow.thrift.TUserGroupInfo user)
+      edu.berkeley.sparrow.thrift.TUserGroupInfo user,
+      boolean isFake)
     {
       this();
       this.message = message;
       this.taskId = taskId;
       this.user = user;
+      this.isFake = isFake;
+      setIsFakeIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public launchTask_args(launchTask_args other) {
+      __isset_bitfield = other.__isset_bitfield;
       if (other.isSetMessage()) {
         this.message = org.apache.thrift.TBaseHelper.copyBinary(other.message);
 ;
@@ -304,6 +321,7 @@ public class BackendService {
       if (other.isSetUser()) {
         this.user = new edu.berkeley.sparrow.thrift.TUserGroupInfo(other.user);
       }
+      this.isFake = other.isFake;
     }
 
     public launchTask_args deepCopy() {
@@ -314,6 +332,8 @@ public class BackendService {
       this.message = null;
       this.taskId = null;
       this.user = null;
+      setIsFakeIsSet(false);
+      this.isFake = false;
     }
 
     public byte[] getMessage() {
@@ -398,6 +418,29 @@ public class BackendService {
       }
     }
 
+    public boolean isIsFake() {
+      return this.isFake;
+    }
+
+    public launchTask_args setIsFake(boolean isFake) {
+      this.isFake = isFake;
+      setIsFakeIsSet(true);
+      return this;
+    }
+
+    public void unsetIsFake() {
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __ISFAKE_ISSET_ID);
+    }
+
+    /** Returns true if field isFake is set (has been assigned a value) and false otherwise */
+    public boolean isSetIsFake() {
+      return EncodingUtils.testBit(__isset_bitfield, __ISFAKE_ISSET_ID);
+    }
+
+    public void setIsFakeIsSet(boolean value) {
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __ISFAKE_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case MESSAGE:
@@ -424,6 +467,14 @@ public class BackendService {
         }
         break;
 
+      case IS_FAKE:
+        if (value == null) {
+          unsetIsFake();
+        } else {
+          setIsFake((Boolean)value);
+        }
+        break;
+
       }
     }
 
@@ -437,6 +488,9 @@ public class BackendService {
 
       case USER:
         return getUser();
+
+      case IS_FAKE:
+        return Boolean.valueOf(isIsFake());
 
       }
       throw new IllegalStateException();
@@ -455,6 +509,8 @@ public class BackendService {
         return isSetTaskId();
       case USER:
         return isSetUser();
+      case IS_FAKE:
+        return isSetIsFake();
       }
       throw new IllegalStateException();
     }
@@ -496,6 +552,15 @@ public class BackendService {
         if (!(this_present_user && that_present_user))
           return false;
         if (!this.user.equals(that.user))
+          return false;
+      }
+
+      boolean this_present_isFake = true;
+      boolean that_present_isFake = true;
+      if (this_present_isFake || that_present_isFake) {
+        if (!(this_present_isFake && that_present_isFake))
+          return false;
+        if (this.isFake != that.isFake)
           return false;
       }
 
@@ -545,6 +610,16 @@ public class BackendService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetIsFake()).compareTo(typedOther.isSetIsFake());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetIsFake()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.isFake, typedOther.isFake);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -588,6 +663,10 @@ public class BackendService {
         sb.append(this.user);
       }
       first = false;
+      if (!first) sb.append(", ");
+      sb.append("isFake:");
+      sb.append(this.isFake);
+      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -613,6 +692,8 @@ public class BackendService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bitfield = 0;
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te.getMessage());
@@ -663,6 +744,14 @@ public class BackendService {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 4: // IS_FAKE
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.isFake = iprot.readBool();
+                struct.setIsFakeIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -693,6 +782,9 @@ public class BackendService {
           struct.user.write(oprot);
           oprot.writeFieldEnd();
         }
+        oprot.writeFieldBegin(IS_FAKE_FIELD_DESC);
+        oprot.writeBool(struct.isFake);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -720,7 +812,10 @@ public class BackendService {
         if (struct.isSetUser()) {
           optionals.set(2);
         }
-        oprot.writeBitSet(optionals, 3);
+        if (struct.isSetIsFake()) {
+          optionals.set(3);
+        }
+        oprot.writeBitSet(optionals, 4);
         if (struct.isSetMessage()) {
           oprot.writeBinary(struct.message);
         }
@@ -730,12 +825,15 @@ public class BackendService {
         if (struct.isSetUser()) {
           struct.user.write(oprot);
         }
+        if (struct.isSetIsFake()) {
+          oprot.writeBool(struct.isFake);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, launchTask_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(3);
+        BitSet incoming = iprot.readBitSet(4);
         if (incoming.get(0)) {
           struct.message = iprot.readBinary();
           struct.setMessageIsSet(true);
@@ -749,6 +847,10 @@ public class BackendService {
           struct.user = new edu.berkeley.sparrow.thrift.TUserGroupInfo();
           struct.user.read(iprot);
           struct.setUserIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.isFake = iprot.readBool();
+          struct.setIsFakeIsSet(true);
         }
       }
     }
