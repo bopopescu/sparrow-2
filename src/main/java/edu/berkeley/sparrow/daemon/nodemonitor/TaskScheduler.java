@@ -41,14 +41,16 @@ public abstract class TaskScheduler {
     public TResourceVector estimatedResources;
     public TUserGroupInfo user;
     public InetSocketAddress backendSocket;
+    public boolean isFake;
 
     public TaskDescription(TFullTaskId taskId, ByteBuffer message,
-        TResourceVector estimatedResources, TUserGroupInfo user, InetSocketAddress addr) {
+        TResourceVector estimatedResources, TUserGroupInfo user, InetSocketAddress addr, boolean isFake) {
       this.message = message;
       this.taskId = taskId;
       this.estimatedResources = estimatedResources;
       this.user = user;
       this.backendSocket = addr;
+      this.isFake = isFake;
     }
   }
 

@@ -155,12 +155,14 @@ public class SimpleBackend implements BackendService.Iface {
         private TFullTaskId taskId;
         private long taskStartTime;
         private boolean changeWorkerSpeed;
+        private boolean isFake;
 
-        public TaskRunnable(String requestId, TFullTaskId taskId, ByteBuffer message, boolean changeWorkerSpeed) {
+        public TaskRunnable(String requestId, TFullTaskId taskId, ByteBuffer message, boolean changeWorkerSpeed, boolean isFake) {
             this.taskStartTime = message.getLong();
             this.taskDuration = message.getDouble();
             this.taskId = taskId;
             this.changeWorkerSpeed = changeWorkerSpeed;
+            this.isFake = isFake;
         }
 
         @Override
@@ -212,12 +214,20 @@ public class SimpleBackend implements BackendService.Iface {
 //          LOG.debug("Aggregate task rate: " + taskRate);
 
             long completionTime = System.currentTimeMillis() - startTime;
-
-            LOG.debug("Actual task in " + (taskDuration) + "ms");
-            LOG.debug("Task completed in " + completionTime + "ms");
-            LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
-            LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
-            LOG.debug("CurrentTime in " + System.currentTimeMillis());
+            if(!isFake) {
+                LOG.debug("Actual task in " + (taskDuration) + "ms");
+                LOG.debug("Task completed in " + completionTime + "ms");
+                LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
+                LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
+                LOG.debug("CurrentTime in " + System.currentTimeMillis());
+            } else {
+                LOG.debug("FakeActual task in " + (taskDuration) + "ms");
+                LOG.debug("FakeTask completed in " + completionTime + "ms");
+                LOG.debug("FakeResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
+                LOG.debug("FakeWaitingTime in " + (startTime - taskStartTime) + "ms");
+                LOG.debug("FakeCurrentTime in " + System.currentTimeMillis());
+            }
+            LOG.debug("TaskId in " + taskId.toString());
 
             //Adds the current completion time
             ma.add(completionTime);
@@ -266,16 +276,16 @@ public class SimpleBackend implements BackendService.Iface {
 
     @Override
     public void launchTask(ByteBuffer message, TFullTaskId taskId,
-                           TUserGroupInfo user) throws TException {
+                           TUserGroupInfo user, boolean isFake) throws TException {
         //LOG.info("Submitting task " + taskId.getTaskId() + " at " + System.currentTimeMillis());
         if (changeWorkerSpeed == 0) {
             LOG.debug("Runs normally without altering worker Speed");
             executor.submit(new TaskRunnable(
-                    taskId.requestId, taskId, message, false));
+                    taskId.requestId, taskId, message, false, isFake));
         } else {
             LOG.debug("Runs by altering worker Speed");
             executor.submit(new TaskRunnable(
-                    taskId.requestId, taskId, message, true));
+                    taskId.requestId, taskId, message, true, isFake));
         }
     }
 

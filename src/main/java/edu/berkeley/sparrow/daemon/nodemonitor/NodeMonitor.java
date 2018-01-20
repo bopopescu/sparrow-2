@@ -170,7 +170,7 @@ public class NodeMonitor {
             return false;
         }
         scheduler.submitTask(scheduler.new TaskDescription(taskId, message,
-                estimatedResources, user, socket), taskId.appId, isFake);
+                estimatedResources, user, socket, isFake), taskId.appId, isFake);
         return true;
     }
 

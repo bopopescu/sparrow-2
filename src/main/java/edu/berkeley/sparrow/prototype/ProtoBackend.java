@@ -207,7 +207,7 @@ public class ProtoBackend implements BackendService.Iface {
 
   @Override
   public void launchTask(ByteBuffer message, TFullTaskId taskId,
-      TUserGroupInfo user) throws TException {
+      TUserGroupInfo user, boolean isFake) throws TException {
     LOG.info("Submitting task " + taskId.getTaskId() + "at " + System.currentTimeMillis());
 
     // Note we ignore user here
