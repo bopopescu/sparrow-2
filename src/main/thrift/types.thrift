@@ -25,6 +25,7 @@ struct TFullTaskId {
   2: string requestId; // Scheduling request ID as assigned by the FE
   3: string appId;     // ID of the application
   4: string frontendSocket; // Host:Port of the sparrow frontend
+  5: bool isFake; //pass isFake as a basic identifier
 }
 
 struct TUserGroupInfo {
