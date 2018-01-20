@@ -246,6 +246,7 @@ public class Scheduler {
             id.frontendSocket = address.getHostName() + ":" + address.getPort();
             id.requestId = requestId;
             id.taskId = taskId;
+            id.isFake = isFake;
             client.launchTask(response.getTaskSpec().message, id,
                     req.getUser(), response.getTaskSpec().getEstimatedResources(), isFake,
                     new TaskLaunchCallback(latch, client, response.getNodeAddr()));

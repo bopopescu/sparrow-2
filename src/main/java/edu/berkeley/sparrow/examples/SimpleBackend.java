@@ -193,7 +193,7 @@ public class SimpleBackend implements BackendService.Iface {
                     }
                     LOG.debug("Minute is " + minutes);
                 }
-
+                System.out.println(taskId.isFake + taskId.getRequestId() + "<===========");
 
                 long sleepTime = (long) ((Double.valueOf(taskDuration) / Double.valueOf(hostWorkSpeed)));
 
