@@ -284,7 +284,7 @@ public class SimpleFrontend implements FrontendService.Iface {
             int tasksPerJob = conf.getInt(TASKS_PER_JOB, DEFAULT_TASKS_PER_JOB);
             int fakeTasks = conf.getInt(FAKE_TASKS, DEFAULT_FAKE_TASKS);
             int changeArrival = conf.getInt(CHANGE_ARRIVAL, DEFAULT_CHANGE_ARRIVAL);
-	    String realLoads = "";
+            String realLoads = "";
             String fakeLoads = "";
             for (String altered : conf.getStringArray(REAL_LOADS)) {
                 realLoads = realLoads + altered + ",";
@@ -292,10 +292,8 @@ public class SimpleFrontend implements FrontendService.Iface {
             for (String altered : conf.getStringArray(FAKE_LOADS)) {
                 fakeLoads = realLoads + altered + ",";
             }
-            System.out.println(realLoads);
-	    System.out.println("aaloo");
             //String realLoads = conf.getString(REAL_LOADS, DEFAULT_REAL_LOADS);
-           // String fakeLoads = conf.getString(FAKE_LOADS, DEFAULT_FAKE_LOADS);
+            // String fakeLoads = conf.getString(FAKE_LOADS, DEFAULT_FAKE_LOADS);
             arrivalConfigTime = conf.getInt(ARRIVAL_CONFIG_TIME, DEFAULT_ARRIVAL_CONFIG_TIME);
 
             String fakeLoadRatio = conf.getString(FAKE_LOAD_RATIO, DEFAULT_FAKE_LOAD_RATIO);
@@ -408,7 +406,8 @@ public class SimpleFrontend implements FrontendService.Iface {
                 taskLauncher.shutdown();
 
             } else {
-                System.out.println(realLoads + "<------");
+                experimentDurationS = 11*60; //RUnning for 11 minutes
+                LOG.debug(realLoads + "<------");
                 if (realLoads.equalsIgnoreCase("") || fakeLoads.equalsIgnoreCase("")) {
                     LOG.debug("Warning!!! Empty alteration");
                 } else {
@@ -418,11 +417,10 @@ public class SimpleFrontend implements FrontendService.Iface {
                     int counter = 0;
                     for (String pair : keyValuePairs)                        //iterate over the pairs
                     {
-			System.out.println("----->" + pair);
                         mapRealLoad.put((int) counter / 60, Double.valueOf(pair));
                         counter = counter + arrivalConfigTime;
                     }
-		    System.out.println("=====>" + mapRealLoad.toString());
+                    LOG.debug("Real Load: " + mapRealLoad.toString());
                     String[] keyValuePairsFake = fakeLoads.split(",");              //split the string to creat key-value pairs
                     int counter1 = 0;
                     for (String pair : keyValuePairsFake)                        //iterate over the pairs
@@ -441,10 +439,9 @@ public class SimpleFrontend implements FrontendService.Iface {
 
                 ScheduledFuture<?> sf = null;
                 ScheduledFuture<?> sfFake = null;
-		 System.out.println("FAKETASKS1");
-                while (System.currentTimeMillis() < startTime + 5 * 1000) {
-                       System.out.println("FAKETASKS" +fakeTasks);
-                       if (fakeTasks == 1) {
+                while (System.currentTimeMillis() < startTime + experimentDurationS * 1000) {
+                    Thread.sleep(100);
+                    if (fakeTasks == 1) {
                         int minutes = (int) (((System.currentTimeMillis() / 1000) / 60) % 60);
 
                         if (mapRealLoad.get(minutes) != null && mapFakeLoad.get(minutes) != null) { //Currently both fakeload and real load change at the same time
@@ -459,18 +456,17 @@ public class SimpleFrontend implements FrontendService.Iface {
                                 arrivalPeriodMillisReal = (long) (tasksPerJob / arrivalRateReal);
                                 arrivalPeriodMillisFake = (long) (tasksPerJob / arrivalRateFake);
                                 runnableFake.setFake(true);
+                                LOG.debug("New Real Arrival Period------------> " + arrivalPeriodMillisReal);
+                                LOG.debug("New Fake Arrival Period------------> " + arrivalPeriodMillisFake);
 
                                 sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillisReal, TimeUnit.MILLISECONDS);
                                 sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillisFake, TimeUnit.MILLISECONDS);
-                                minuteCounter = minuteCounter + 1;//(int)arrivalConfigTime/60;
+                                minuteCounter = minuteCounter + (int)arrivalConfigTime/60;
                             }
                         }
                     } else {
                         int minutes = (int) (((System.currentTimeMillis() / 1000) / 60) % 60);
-			LOG.debug("-->M" + minutes);
-			LOG.debug("-->MC" + minuteCounter);
                         if (mapRealLoad.get(minutes) != null) {
-				System.out.println(minutes + minuteCounter);
                             if (minuteCounter <= minutes) {
                                 if (sf != null) {
                                     sf.cancel(true);
@@ -479,14 +475,17 @@ public class SimpleFrontend implements FrontendService.Iface {
                                 double arrivalRate = load * serviceRate;
                                 arrivalPeriodMillis = (long) (tasksPerJob / arrivalRate);
 
-                                System.out.println("New Arrival Period: " + arrivalPeriodMillis);
+                                LOG.debug("New Arrival Period------------> " + arrivalPeriodMillis);
                                 sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
-                                minuteCounter = minuteCounter + 1;// (int)arrivalConfigTime/60;
+                                minuteCounter = minuteCounter + (int)arrivalConfigTime/60;
                             }
                         }
 
                     }
 
+                }
+                if (sf != null) {
+                    sf.cancel(true);
                 }
             }
 
