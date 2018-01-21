@@ -207,7 +207,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                     LOG.error("Scheduling request failed!", e);
                 }
                 long end = System.currentTimeMillis();
-                LOG.debug("Scheduling request duration " + (end - start));
+                LOG.debug("Scheduling request duration " + isFake + " " + (end - start));
             } catch (Exception e) {
                 LOG.debug(e.getMessage());
             }
