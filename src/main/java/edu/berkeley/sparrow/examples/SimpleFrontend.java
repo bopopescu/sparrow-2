@@ -290,7 +290,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                 realLoads = realLoads + altered + ",";
             }
             for (String altered : conf.getStringArray(FAKE_LOADS)) {
-                fakeLoads = realLoads + altered + ",";
+                fakeLoads = fakeLoads + altered + ",";
             }
             //String realLoads = conf.getString(REAL_LOADS, DEFAULT_REAL_LOADS);
             // String fakeLoads = conf.getString(FAKE_LOADS, DEFAULT_FAKE_LOADS);
@@ -422,12 +422,14 @@ public class SimpleFrontend implements FrontendService.Iface {
                     }
                     LOG.debug("Real Load: " + mapRealLoad.toString());
                     String[] keyValuePairsFake = fakeLoads.split(",");              //split the string to creat key-value pairs
-                    int counter1 = 0;
+                    counter = 0;
                     for (String pair : keyValuePairsFake)                        //iterate over the pairs
                     {
                         mapFakeLoad.put((int) counter / 60, Double.valueOf(pair));
                         counter = counter + arrivalConfigTime;
                     }
+		    LOG.debug("Fake Load: " + mapFakeLoad.toString());
+
                 }
 
                 LOG.debug("sleeping");
