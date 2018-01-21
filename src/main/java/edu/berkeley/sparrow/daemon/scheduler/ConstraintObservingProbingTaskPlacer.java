@@ -97,7 +97,7 @@ public class  ConstraintObservingProbingTaskPlacer extends ProbingTaskPlacer {
         AUDIT_LOG.info(Logging.auditEventString("probe_launch", requestId,
             machine.getAddress().getHostAddress()));
         client.getLoad(appId, requestId,
-            new ProbeCallback(machine, loads, latch, appId, requestId, client));
+            new ProbeCallback(machine, loads, latch, appId, requestId, client,0.99)); //Passing Random WorkerSpeed Qiong Be Careful
       } catch (TException e) {
         LOG.fatal(e);
       }

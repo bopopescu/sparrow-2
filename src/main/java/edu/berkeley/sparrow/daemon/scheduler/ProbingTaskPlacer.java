@@ -275,7 +275,6 @@ public class ProbingTaskPlacer implements TaskPlacer {
                                 TResources.createResourceVector(1000, 4), 100));
             }
         }
-        int scaledImplementation = 1;
         Collection<TaskPlacementResponse> out;
         if (scaled == 1) {
             LOG.debug("Sunil Running Scaled version");
