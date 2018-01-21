@@ -20,6 +20,7 @@ import edu.berkeley.sparrow.thrift.InternalService.AsyncClient;
 import edu.berkeley.sparrow.thrift.InternalService.AsyncClient.getLoad_call;
 import edu.berkeley.sparrow.thrift.TResourceUsage;
 import edu.berkeley.sparrow.thrift.TTaskSpec;
+import org.w3c.dom.NodeList;
 
 /**
  * A task placer which probes node monitors in order to determine placement.
@@ -35,6 +36,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
      */
     private double probeRatio;
     private int policy;
+    private int scaled;
 
     private ThriftClientPool<AsyncClient> clientPool;
     private RandomTaskPlacer randomPlacer;
@@ -58,16 +60,18 @@ public class ProbingTaskPlacer implements TaskPlacer {
         private String appId;
         private String requestId;
         private AsyncClient client;
+        private double chosenWorkerSpeed;
 
         ProbeCallback(
                 InetSocketAddress socket, Map<InetSocketAddress, TResourceUsage> loads,
-                CountDownLatch latch, String appId, String requestId, AsyncClient client) {
+                CountDownLatch latch, String appId, String requestId, AsyncClient client, Double chosenWorkerSpeed) {
             this.socket = socket;
             this.loads = loads;
             this.latch = latch;
             this.appId = appId;
             this.requestId = requestId;
             this.client = client;
+            this.chosenWorkerSpeed = chosenWorkerSpeed;
         }
 
         @Override
@@ -97,6 +101,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
                     LOG.warn("Probe returned no load information for " + appId);
                 } else {
                     TResourceUsage result = response.getResult().get(appId);
+                    result.setWorkSpeed(chosenWorkerSpeed);
                     loads.put(socket, result);
                     latch.countDown();
                 }
@@ -119,12 +124,13 @@ public class ProbingTaskPlacer implements TaskPlacer {
         probeRatio = conf.getDouble(SparrowConf.SAMPLE_RATIO,
                 SparrowConf.DEFAULT_SAMPLE_RATIO);
         policy = conf.getInt(SparrowConf.POLICY, SparrowConf.DEFAULT_POLICY);
+        scaled = conf.getInt(SparrowConf.SCALED, SparrowConf.DEFAULT_SCALED);
         this.clientPool = clientPool;
         randomPlacer = new RandomTaskPlacer();
         randomPlacer.initialize(conf, clientPool);
     }
 
-    private List<InetSocketAddress> returnNodeList(int probesToLaunch, double[] cdf_worker_speed, HashMap<String, InetSocketAddress> nodeToInetMap,  ArrayList<String> backendList ){
+    private List<InetSocketAddress> returnNodeList(int probesToLaunch, double[] cdf_worker_speed, HashMap<String, InetSocketAddress> nodeToInetMap, ArrayList<String> backendList) {
         //This was used to make sure probes aren't sent to same worker
         ArrayList<Integer> workerIndex = new ArrayList<Integer>();
         //This is supposed to be the nodelist for specified no. of probes
@@ -153,6 +159,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
         LOG.debug(Logging.functionCall(appId, nodes, tasks));
 
         if (probeRatio < 1.0) {
+            LOG.debug("Random Enabled");
             return randomPlacer.placeTasks(appId, requestId, nodes, tasks, workerSpeedMap);
         }
 
@@ -171,6 +178,9 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
         ArrayList<String> backendList = new ArrayList<String>();
         ArrayList<Double> workerSpeedList = new ArrayList<Double>();
+        //Scheculer sends the workerspeed map if estimated then this might be empty
+        //Probing task placer doesn't care whether learning is used or not
+        //Scheduler handles the logic
 
         for (Map.Entry<String, Double> entry : workerSpeedMap.entrySet()) {
             backendList.add(entry.getKey());
@@ -195,10 +205,9 @@ public class ProbingTaskPlacer implements TaskPlacer {
         }
 
 
-
         if (policy == 1) { //PSS + POT where probes to launch determines
             if (nodes.size() > probesToLaunch) {
-                nodeList = returnNodeList(probesToLaunch,cdf_worker_speed,nodeToInetMap,backendList);
+                nodeList = returnNodeList(probesToLaunch, cdf_worker_speed, nodeToInetMap, backendList);
             } else {
                 LOG.debug("WARNING :: No. of Probes is greater than Nodes Size. PSS not running. Only sending specified no. of probes.");
                 LOG.debug("Currently Probing all available machines");
@@ -208,7 +217,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
             }
         } else if (policy == 2) { //PSS i.e probes all the machines
             LOG.debug("Only PSS");
-            nodeList = returnNodeList(nodeList.size(),cdf_worker_speed,nodeToInetMap,backendList);
+            nodeList = returnNodeList(nodeList.size(), cdf_worker_speed, nodeToInetMap, backendList);
         } else if (policy == 3) {
             LOG.debug("POT Without PSS");
             if (nodeList.size() > 1) {
@@ -216,12 +225,29 @@ public class ProbingTaskPlacer implements TaskPlacer {
                 nodeList = nodeList.subList(0, 2); //Hardcode 2 from Power of Two here
             }
         }
+
+        ArrayList<Double> chosenWorkerSpeedsByPSS = new ArrayList<Double>();
+        for (InetSocketAddress nodeWorkerSpeed : nodeList) {
+            //From the backend List get the node that matches the address from NodeList
+            int i = backendList.indexOf(nodeWorkerSpeed.getAddress().getHostAddress());
+            //Get the workerSpeed with the same index(since that's how we created backend list and workersspeed list)
+            //Chosen workerspeed List to be used for scaled implementation
+            chosenWorkerSpeedsByPSS.add(workerSpeedList.get(i));
+        }
+
         //all the nodes will be probed if there are more less machine than the probes
         for (InetSocketAddress node : nodeList) {
             try {
                 AsyncClient client = clientPool.borrowClient(node);
+
+                //From the backend List get the node that matches the address from NodeList
+                int i = backendList.indexOf(node.getAddress().getHostAddress());
+                //Get the workerSpeed with the same index(since that's how we created backend list and workersspeed list)
+                //Chosen workerspeed List to be used for scaled implementation
+                Double currentWorkerSpeed = workerSpeedList.get(i);
+
                 ProbeCallback callback = new ProbeCallback(node, loads, latch, appId, requestId,
-                        client);
+                        client, currentWorkerSpeed);
                 LOG.debug("Launching probe on node: " + node);
                 AUDIT_LOG.info(Logging.auditEventString("probe_launch", requestId,
                         node.getAddress().getHostAddress()));
@@ -231,11 +257,13 @@ public class ProbingTaskPlacer implements TaskPlacer {
             }
         }
 
+
         try {
             latch.await(MAX_PROBE_WAIT_MS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
 
         for (InetSocketAddress machine : nodeList) {
             if (!loads.containsKey(machine)) {
@@ -247,9 +275,19 @@ public class ProbingTaskPlacer implements TaskPlacer {
                                 TResources.createResourceVector(1000, 4), 100));
             }
         }
-        AssignmentPolicy assigner = new ComparatorAssignmentPolicy(
-                new TResources.MinQueueComparator());
-        Collection<TaskPlacementResponse> out = assigner.assignTasks(tasks, loads);
+        int scaledImplementation = 1;
+        Collection<TaskPlacementResponse> out;
+        if (scaled == 1) {
+            LOG.debug("Sunil Running Scaled version");
+            AssignmentPolicy assigner = new ComparatorAssignmentPolicy(
+                    new TResources.ScaledQueueComparator());
+            out = assigner.assignTasks(tasks, loads);
+        } else {
+            LOG.debug("Sunil Running UnScaled version");
+            AssignmentPolicy assigner = new ComparatorAssignmentPolicy(
+                    new TResources.MinQueueComparator());
+            out = assigner.assignTasks(tasks, loads);
+        }
 
         return out;
     }

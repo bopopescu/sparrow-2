@@ -85,4 +85,7 @@ public class SparrowConf {
 
   public final static String LEARNING = "learning";
   public final static int DEFAULT_LEARNING= 0; //1 PSS+POT, 2 : PSS,  3 ; POT
+
+  public final static String SCALED = "scaled";
+  public final static int DEFAULT_SCALED= 0; //1 PSS+POT, 2 : PSS,  3 ; POT
 }

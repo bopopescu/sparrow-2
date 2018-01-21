@@ -16,6 +16,7 @@ struct TResourceUsage {
   1: TResourceVector resources; // Current resource usage
   2: i32 queueLength;           // Number of queued tasks
   3: optional i32 fakeQueueLength; //Number of queued fake tasks
+  4: optional double workSpeed; //Added this for scaled implementation
 }
 
 

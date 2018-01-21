@@ -115,6 +115,22 @@ public class TResources {
       return 0;
     }
   }
+
+  public static class ScaledQueueComparator implements Comparator<TResourceUsage> {
+    @Override
+    public int compare(TResourceUsage u1, TResourceUsage u2) {
+      //Assumes we'll always receive the workerSpeed??
+      System.out.println("SUNIL Remove this log later---->" + u2.toString() + " vs "+ u1.toString());
+      double q2 = u2.queueLength / u2.workSpeed;
+      double q1 = u1.queueLength / u1.workSpeed;
+      if (q1 > q2) { return 1; }
+      if (q1 < q2) { return -1; }
+      if(q1 == q2) {
+        Random random = new Random();
+        return random.nextBoolean() ? 1 : -1;}
+      return 0;
+    }
+  }
   public static class MinCPUComparator implements Comparator<TResourceUsage> {
     @Override
     public int compare(TResourceUsage u1, TResourceUsage u2) {

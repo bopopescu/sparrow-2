@@ -36,6 +36,7 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
   private static final org.apache.thrift.protocol.TField RESOURCES_FIELD_DESC = new org.apache.thrift.protocol.TField("resources", org.apache.thrift.protocol.TType.STRUCT, (short)1);
   private static final org.apache.thrift.protocol.TField QUEUE_LENGTH_FIELD_DESC = new org.apache.thrift.protocol.TField("queueLength", org.apache.thrift.protocol.TType.I32, (short)2);
   private static final org.apache.thrift.protocol.TField FAKE_QUEUE_LENGTH_FIELD_DESC = new org.apache.thrift.protocol.TField("fakeQueueLength", org.apache.thrift.protocol.TType.I32, (short)3);
+  private static final org.apache.thrift.protocol.TField WORK_SPEED_FIELD_DESC = new org.apache.thrift.protocol.TField("workSpeed", org.apache.thrift.protocol.TType.DOUBLE, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -46,12 +47,14 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
   public TResourceVector resources; // required
   public int queueLength; // required
   public int fakeQueueLength; // optional
+  public double workSpeed; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     RESOURCES((short)1, "resources"),
     QUEUE_LENGTH((short)2, "queueLength"),
-    FAKE_QUEUE_LENGTH((short)3, "fakeQueueLength");
+    FAKE_QUEUE_LENGTH((short)3, "fakeQueueLength"),
+    WORK_SPEED((short)4, "workSpeed");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -72,6 +75,8 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
           return QUEUE_LENGTH;
         case 3: // FAKE_QUEUE_LENGTH
           return FAKE_QUEUE_LENGTH;
+        case 4: // WORK_SPEED
+          return WORK_SPEED;
         default:
           return null;
       }
@@ -114,17 +119,20 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
   // isset id assignments
   private static final int __QUEUELENGTH_ISSET_ID = 0;
   private static final int __FAKEQUEUELENGTH_ISSET_ID = 1;
+  private static final int __WORKSPEED_ISSET_ID = 2;
   private byte __isset_bitfield = 0;
-  private _Fields optionals[] = {_Fields.FAKE_QUEUE_LENGTH};
+  private _Fields optionals[] = {_Fields.FAKE_QUEUE_LENGTH,_Fields.WORK_SPEED};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.RESOURCES, new org.apache.thrift.meta_data.FieldMetaData("resources", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TResourceVector.class)));
-    tmpMap.put(_Fields.QUEUE_LENGTH, new org.apache.thrift.meta_data.FieldMetaData("queueLength", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.FAKE_QUEUE_LENGTH, new org.apache.thrift.meta_data.FieldMetaData("fakeQueueLength", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.RESOURCES, new org.apache.thrift.meta_data.FieldMetaData("resources", org.apache.thrift.TFieldRequirementType.DEFAULT,
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TResourceVector.class)));
+    tmpMap.put(_Fields.QUEUE_LENGTH, new org.apache.thrift.meta_data.FieldMetaData("queueLength", org.apache.thrift.TFieldRequirementType.DEFAULT,
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.FAKE_QUEUE_LENGTH, new org.apache.thrift.meta_data.FieldMetaData("fakeQueueLength", org.apache.thrift.TFieldRequirementType.OPTIONAL,
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.WORK_SPEED, new org.apache.thrift.meta_data.FieldMetaData("workSpeed", org.apache.thrift.TFieldRequirementType.OPTIONAL,
+            new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.DOUBLE)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TResourceUsage.class, metaDataMap);
   }
@@ -133,8 +141,8 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
   }
 
   public TResourceUsage(
-    TResourceVector resources,
-    int queueLength)
+          TResourceVector resources,
+          int queueLength)
   {
     this();
     this.resources = resources;
@@ -152,6 +160,7 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
     }
     this.queueLength = other.queueLength;
     this.fakeQueueLength = other.fakeQueueLength;
+    this.workSpeed = other.workSpeed;
   }
 
   public TResourceUsage deepCopy() {
@@ -164,6 +173,8 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
     this.queueLength = 0;
     setFakeQueueLengthIsSet(false);
     this.fakeQueueLength = 0;
+    setWorkSpeedIsSet(false);
+    this.workSpeed = 0.0;
   }
 
   public TResourceVector getResources() {
@@ -236,45 +247,79 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
     __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __FAKEQUEUELENGTH_ISSET_ID, value);
   }
 
+  public double getWorkSpeed() {
+    return this.workSpeed;
+  }
+
+  public TResourceUsage setWorkSpeed(double workSpeed) {
+    this.workSpeed = workSpeed;
+    setWorkSpeedIsSet(true);
+    return this;
+  }
+
+  public void unsetWorkSpeed() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __WORKSPEED_ISSET_ID);
+  }
+
+  /** Returns true if field workSpeed is set (has been assigned a value) and false otherwise */
+  public boolean isSetWorkSpeed() {
+    return EncodingUtils.testBit(__isset_bitfield, __WORKSPEED_ISSET_ID);
+  }
+
+  public void setWorkSpeedIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __WORKSPEED_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case RESOURCES:
-      if (value == null) {
-        unsetResources();
-      } else {
-        setResources((TResourceVector)value);
-      }
-      break;
+      case RESOURCES:
+        if (value == null) {
+          unsetResources();
+        } else {
+          setResources((TResourceVector)value);
+        }
+        break;
 
-    case QUEUE_LENGTH:
-      if (value == null) {
-        unsetQueueLength();
-      } else {
-        setQueueLength((Integer)value);
-      }
-      break;
+      case QUEUE_LENGTH:
+        if (value == null) {
+          unsetQueueLength();
+        } else {
+          setQueueLength((Integer)value);
+        }
+        break;
 
-    case FAKE_QUEUE_LENGTH:
-      if (value == null) {
-        unsetFakeQueueLength();
-      } else {
-        setFakeQueueLength((Integer)value);
-      }
-      break;
+      case FAKE_QUEUE_LENGTH:
+        if (value == null) {
+          unsetFakeQueueLength();
+        } else {
+          setFakeQueueLength((Integer)value);
+        }
+        break;
+
+      case WORK_SPEED:
+        if (value == null) {
+          unsetWorkSpeed();
+        } else {
+          setWorkSpeed((Double)value);
+        }
+        break;
 
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case RESOURCES:
-      return getResources();
+      case RESOURCES:
+        return getResources();
 
-    case QUEUE_LENGTH:
-      return Integer.valueOf(getQueueLength());
+      case QUEUE_LENGTH:
+        return Integer.valueOf(getQueueLength());
 
-    case FAKE_QUEUE_LENGTH:
-      return Integer.valueOf(getFakeQueueLength());
+      case FAKE_QUEUE_LENGTH:
+        return Integer.valueOf(getFakeQueueLength());
+
+      case WORK_SPEED:
+        return Double.valueOf(getWorkSpeed());
 
     }
     throw new IllegalStateException();
@@ -287,12 +332,14 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
     }
 
     switch (field) {
-    case RESOURCES:
-      return isSetResources();
-    case QUEUE_LENGTH:
-      return isSetQueueLength();
-    case FAKE_QUEUE_LENGTH:
-      return isSetFakeQueueLength();
+      case RESOURCES:
+        return isSetResources();
+      case QUEUE_LENGTH:
+        return isSetQueueLength();
+      case FAKE_QUEUE_LENGTH:
+        return isSetFakeQueueLength();
+      case WORK_SPEED:
+        return isSetWorkSpeed();
     }
     throw new IllegalStateException();
   }
@@ -334,6 +381,15 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       if (!(this_present_fakeQueueLength && that_present_fakeQueueLength))
         return false;
       if (this.fakeQueueLength != that.fakeQueueLength)
+        return false;
+    }
+
+    boolean this_present_workSpeed = true && this.isSetWorkSpeed();
+    boolean that_present_workSpeed = true && that.isSetWorkSpeed();
+    if (this_present_workSpeed || that_present_workSpeed) {
+      if (!(this_present_workSpeed && that_present_workSpeed))
+        return false;
+      if (this.workSpeed != that.workSpeed)
         return false;
     }
 
@@ -383,6 +439,16 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetWorkSpeed()).compareTo(typedOther.isSetWorkSpeed());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetWorkSpeed()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.workSpeed, typedOther.workSpeed);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -418,6 +484,12 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       if (!first) sb.append(", ");
       sb.append("fakeQueueLength:");
       sb.append(this.fakeQueueLength);
+      first = false;
+    }
+    if (isSetWorkSpeed()) {
+      if (!first) sb.append(", ");
+      sb.append("workSpeed:");
+      sb.append(this.workSpeed);
       first = false;
     }
     sb.append(")");
@@ -464,7 +536,7 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       while (true)
       {
         schemeField = iprot.readFieldBegin();
-        if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (schemeField.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (schemeField.id) {
@@ -473,7 +545,7 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
               struct.resources = new TResourceVector();
               struct.resources.read(iprot);
               struct.setResourcesIsSet(true);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
@@ -481,7 +553,7 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
             if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
               struct.queueLength = iprot.readI32();
               struct.setQueueLengthIsSet(true);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
@@ -489,7 +561,15 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
             if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
               struct.fakeQueueLength = iprot.readI32();
               struct.setFakeQueueLengthIsSet(true);
-            } else { 
+            } else {
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 4: // WORK_SPEED
+            if (schemeField.type == org.apache.thrift.protocol.TType.DOUBLE) {
+              struct.workSpeed = iprot.readDouble();
+              struct.setWorkSpeedIsSet(true);
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
@@ -521,6 +601,11 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
         oprot.writeI32(struct.fakeQueueLength);
         oprot.writeFieldEnd();
       }
+      if (struct.isSetWorkSpeed()) {
+        oprot.writeFieldBegin(WORK_SPEED_FIELD_DESC);
+        oprot.writeDouble(struct.workSpeed);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -548,7 +633,10 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       if (struct.isSetFakeQueueLength()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetWorkSpeed()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetResources()) {
         struct.resources.write(oprot);
       }
@@ -558,12 +646,15 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
       if (struct.isSetFakeQueueLength()) {
         oprot.writeI32(struct.fakeQueueLength);
       }
+      if (struct.isSetWorkSpeed()) {
+        oprot.writeDouble(struct.workSpeed);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, TResourceUsage struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.resources = new TResourceVector();
         struct.resources.read(iprot);
@@ -577,8 +668,11 @@ public class TResourceUsage implements org.apache.thrift.TBase<TResourceUsage, T
         struct.fakeQueueLength = iprot.readI32();
         struct.setFakeQueueLengthIsSet(true);
       }
+      if (incoming.get(3)) {
+        struct.workSpeed = iprot.readDouble();
+        struct.setWorkSpeedIsSet(true);
+      }
     }
   }
 
 }
-
