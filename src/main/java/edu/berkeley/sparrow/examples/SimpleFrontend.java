@@ -79,8 +79,20 @@ public class SimpleFrontend implements FrontendService.Iface {
     public static final String FAKE_TASKS = "fake_tasks";
     public static final int DEFAULT_FAKE_TASKS = 0;
 
+    public static final String CHANGE_ARRIVAL = "change_arrival";
+    public static final int DEFAULT_CHANGE_ARRIVAL = 0;
+
     public static final String FAKE_LOAD_RATIO = "fake_load_ratio";
     public static final String DEFAULT_FAKE_LOAD_RATIO = "0.1:0.2";
+
+    public static final String FAKE_LOADS = "fake_load_ratio";
+    public static final String DEFAULT_FAKE_LOADS = "0.1";
+    public static final String REAL_LOADS = "fake_load_ratio";
+    public static final String DEFAULT_REAL_LOADS = "0.2";
+
+    private static final String ARRIVAL_CONFIG_TIME = "arrival_config_time";
+    private static final int DEFAULT_ARRIVAL_CONFIG_TIME = 60;
+    private static int arrivalConfigTime;
 
 
     /**
@@ -170,6 +182,9 @@ public class SimpleFrontend implements FrontendService.Iface {
         @Override
         public void run() {
             try {
+                //thisHost = Inet4Address.getLocalHost().getHostAddress();
+
+
                 // Generate tasks in the format expected by Sparrow. First, pack task parameters.
                 ByteBuffer message = ByteBuffer.allocate(16);
                 //Sending this to double confirm response time and waiting time
@@ -193,11 +208,12 @@ public class SimpleFrontend implements FrontendService.Iface {
                 }
                 long end = System.currentTimeMillis();
                 LOG.debug("Scheduling request duration " + (end - start));
-            } catch (Exception e){
+            } catch (Exception e) {
                 LOG.debug(e.getMessage());
             }
         }
     }
+
 
     public void run(String[] args) {
         try {
@@ -267,7 +283,12 @@ public class SimpleFrontend implements FrontendService.Iface {
             int totalNoOfTasks = conf.getInt(TOTAL_NO_OF_TASKS, DEFAULT_TOTAL_NO_OF_TASKS);
             int tasksPerJob = conf.getInt(TASKS_PER_JOB, DEFAULT_TASKS_PER_JOB);
             int fakeTasks = conf.getInt(FAKE_TASKS, DEFAULT_FAKE_TASKS);
-            String fakeLoadRatio= conf.getString(FAKE_LOAD_RATIO, DEFAULT_FAKE_LOAD_RATIO);
+            int changeArrival = conf.getInt(CHANGE_ARRIVAL, DEFAULT_CHANGE_ARRIVAL);
+            String realLoads = conf.getString(REAL_LOADS, DEFAULT_REAL_LOADS);
+            String fakeLoads = conf.getString(FAKE_LOADS, DEFAULT_FAKE_LOADS);
+            arrivalConfigTime = conf.getInt(ARRIVAL_CONFIG_TIME, DEFAULT_ARRIVAL_CONFIG_TIME);
+
+            String fakeLoadRatio = conf.getString(FAKE_LOAD_RATIO, DEFAULT_FAKE_LOAD_RATIO);
 
             int schedulerPort = conf.getInt(SCHEDULER_PORT,
                     SchedulerThrift.DEFAULT_SCHEDULER_THRIFT_PORT);
@@ -276,6 +297,8 @@ public class SimpleFrontend implements FrontendService.Iface {
             client.initialize(new InetSocketAddress(schedulerHost, schedulerPort), APPLICATION_ID, this);
             ScheduledThreadPoolExecutor taskLauncher = null;
 
+            HashMap<Integer, Double> mapRealLoad = new HashMap<Integer, Double>();
+            HashMap<Integer, Double> mapFakeLoad = new HashMap<Integer, Double>();
 
 
             double W = 0; //W is total Worker Speed in the system
@@ -287,115 +310,171 @@ public class SimpleFrontend implements FrontendService.Iface {
             int median_task_duration = taskDurationMillis;
             double lambda = 1.0 / median_task_duration;
             random.setSeed(123456789);
+            //keep producing tasks, we'll cut off based on how long we want to run the experiment
+            for (int l = 0; l < totalNoOfTasks + EXTRA_TASKS; l++) { //Added extra tasks
+                taskDurations.add(getNext(lambda));
+            }
+
+            for (int lf = totalNoOfTasks; lf < (totalNoOfTasks * 2) + EXTRA_TASKS; lf++) { //Added extra tasks
+                taskDurationsFake.add(getNext(lambda));
+            }
+            double averageTaskDurationMillis = median_task_duration;
+            double serviceRate = W / averageTaskDurationMillis; //When taking 3500 tasks with the given seed for exponential distribution, this is the average we get for task duration
 
 
-            double realLoad;
-            double fakeLoad;
+            double realLoad = 0.1;
+            double fakeLoad = 0.2;
             long arrivalPeriodMillisFake;
             long arrivalPeriodMillisReal;
             long arrivalPeriodMillis;
-            String[] entry = fakeLoadRatio.split(":");
-            if(entry.length == 2){
-                realLoad=Double.valueOf(entry[0].trim());
-                fakeLoad= Double.valueOf(entry[1].trim());
-                if(fakeLoad+realLoad>=1){
-                    LOG.debug("Warning Load >=1");
+            if (changeArrival == 0) {
+                String[] entry = fakeLoadRatio.split(":");
+                if (entry.length == 2) {
+                    realLoad = Double.valueOf(entry[0].trim());
+                    fakeLoad = Double.valueOf(entry[1].trim());
+                    if (fakeLoad + realLoad >= 1) {
+                        LOG.debug("Warning Load >=1");
+                    }
+                } else {
+                    LOG.debug("Warning!!! Using default Load");
+                    realLoad = 0.1;
+                    fakeLoad = 0.2;
                 }
+
+
+                if (fakeTasks == 1) {
+                    LOG.debug("Enabling Fake Tasks");
+                    double arrivalRateReal = realLoad * serviceRate;
+                    double arrivalRateFake = fakeLoad * serviceRate;
+
+                    //Get Arrival Period for individual task
+                    arrivalPeriodMillisReal = (long) (tasksPerJob / arrivalRateReal);
+                    arrivalPeriodMillisFake = (long) (tasksPerJob / arrivalRateFake);
+
+                    //Get Experiment duration based on no. of tasks (in s)
+                    //Need to add more seconds to make sure all tasks get executed
+                    //TODO fix this later
+                    experimentDurationS = (int) ((totalNoOfTasks * 2) * (arrivalPeriodMillisReal) / (1000 * tasksPerJob));
+
+                    LOG.debug("APReal: " + arrivalPeriodMillisReal + "APFake: " + arrivalPeriodMillisFake + "; ARReal: " +
+                            arrivalRateReal + "ARFake: " + arrivalRateFake + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
+                            "; TOTAL TASK NUMBER: " + totalNoOfTasks + ", Extra Tasks: " + EXTRA_TASKS);
+
+                    LOG.debug("Using Real arrival period of " + arrivalPeriodMillisReal +
+                            " milliseconds and running experiment for " + experimentDurationS + " seconds.");
+                    JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
+                    JobLaunchRunnable runnableFake = new JobLaunchRunnable(tasksPerJob, taskDurationsFake, workSpeedMap.toString());
+                    taskLauncher = new ScheduledThreadPoolExecutor(1);
+                    runnableFake.setFake(true);
+                    ScheduledFuture<?> sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillisReal, TimeUnit.MILLISECONDS);
+                    ScheduledFuture<?> sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillisFake, TimeUnit.MILLISECONDS);
+
+                } else {
+                    load = realLoad;
+                    LOG.debug("Disabling Fake Tasks");
+                    double arrivalRate = load * serviceRate;
+                    //Get Arrival Period for individual task
+                    arrivalPeriodMillis = (long) (tasksPerJob / arrivalRate);
+
+                    //Get Experiment duration based on no. of tasks (in s)
+                    //Need to add more seconds to make sure all tasks get executed
+                    experimentDurationS = (int) ((totalNoOfTasks) * (arrivalPeriodMillis) / (1000 * tasksPerJob));
+
+                    LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
+                            "; TOTAL TASK NUMBER: " + totalNoOfTasks + ", Extra Tasks: " + EXTRA_TASKS);
+
+                    LOG.debug("Using arrival period of " + arrivalPeriodMillis +
+                            " milliseconds and running experiment for " + experimentDurationS + " seconds.");
+                    //Passing workerSpeedMap as string from frontend to scheduler
+                    JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
+                    taskLauncher = new ScheduledThreadPoolExecutor(1);
+                    taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
+                }
+                long startTime = System.currentTimeMillis();
+                LOG.debug("sleeping");
+                while (System.currentTimeMillis() < startTime + experimentDurationS * 1000) {
+                    Thread.sleep(100);
+                }
+                taskLauncher.shutdown();
+
             } else {
-                LOG.debug("Warning!!! Using default Load");
-                realLoad = 0.1;
-                fakeLoad =0.2;
-            }
+                if (realLoads.equalsIgnoreCase("") || fakeLoads.equalsIgnoreCase("")) {
+                    LOG.debug("Warning!!! Empty alteration");
+                } else {
+                    //Create Hashmap from the string
+                    //Will use this function in the util because this is being used everywhere.
+                    String[] keyValuePairs = realLoads.split(",");              //split the string to creat key-value pairs
+                    int counter = 0;
+                    for (String pair : keyValuePairs)                        //iterate over the pairs
+                    {
+                        mapRealLoad.put((int) counter / 60, Double.valueOf(pair));
+                        counter = counter + arrivalConfigTime;
+                    }
 
-            if (fakeTasks ==1){
-                LOG.debug("Enabling Fake Tasks");
-                double value = 0;
-
-                //keep producing tasks, we'll cut off based on how long we want to run the experiment
-                for (int l = 0; l < totalNoOfTasks+EXTRA_TASKS; l++) { //Added extra tasks
-                    value = getNext(lambda);
-                    taskDurations.add(value);
+                    String[] keyValuePairsFake = fakeLoads.split(",");              //split the string to creat key-value pairs
+                    int counter1 = 0;
+                    for (String pair : keyValuePairsFake)                        //iterate over the pairs
+                    {
+                        mapFakeLoad.put((int) counter / 60, Double.valueOf(pair));
+                        counter = counter + arrivalConfigTime;
+                    }
                 }
 
-                double value1 = 0;
-                for (int lf = totalNoOfTasks ; lf < (totalNoOfTasks*2)+EXTRA_TASKS; lf++) { //Added extra tasks
-                    value1 = getNext(lambda);
-                    taskDurationsFake.add(value1);
-                }
-
-                double averageTaskDurationMillis = median_task_duration;
-
-                //Get Service Rate
-                double serviceRate = W / averageTaskDurationMillis; //When taking 3500 tasks with the given seed for exponential distribution, this is the average we get for task duration
-                //Get Arrival Rate
-                double arrivalRateReal = realLoad * serviceRate;
-                double arrivalRateFake = fakeLoad * serviceRate;
-
-                //Get Arrival Period for individual task
-                arrivalPeriodMillisReal = (long) (tasksPerJob / arrivalRateReal);
-                arrivalPeriodMillisFake = (long) (tasksPerJob / arrivalRateFake);
-
-                //Get Experiment duration based on no. of tasks (in s)
-                //Need to add more seconds to make sure all tasks get executed
-                //TODO fix this later
-                experimentDurationS = (int) ((totalNoOfTasks*2) * (arrivalPeriodMillisReal) / (1000 * tasksPerJob));
-
-                LOG.debug("APReal: " + arrivalPeriodMillisReal + "APFake: " + arrivalPeriodMillisFake+ "; ARReal: " +
-                        arrivalRateReal +"ARFake: " + arrivalRateFake +  "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
-                        "; TOTAL TASK NUMBER: " + totalNoOfTasks + ", Extra Tasks: " + EXTRA_TASKS );
-
-                LOG.debug("Using Real arrival period of " + arrivalPeriodMillisReal +
-                        " milliseconds and running experiment for " + experimentDurationS + " seconds.");
+                LOG.debug("sleeping");
+                long startTime = System.currentTimeMillis();
+                int minuteCounter = (int) (((System.currentTimeMillis() / 1000) / 60) % 60); //Is there a chance that
                 JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
                 JobLaunchRunnable runnableFake = new JobLaunchRunnable(tasksPerJob, taskDurationsFake, workSpeedMap.toString());
                 taskLauncher = new ScheduledThreadPoolExecutor(1);
-                runnableFake.setFake(true);
-                ScheduledFuture<?> sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillisReal, TimeUnit.MILLISECONDS);
-                ScheduledFuture<?> sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillisFake, TimeUnit.MILLISECONDS);
 
-            } else {
-                load = realLoad;
-                LOG.debug("Disabling Fake Tasks");
-                double value = 0;
-                double sumValue = 0;
+                ScheduledFuture<?> sf = null;
+                ScheduledFuture<?> sfFake = null;
 
-                //keep producing tasks, we'll cut off based on how long we want to run the experiment
-                for (int l = 0; l < totalNoOfTasks+EXTRA_TASKS; l++) { //Added extra tasks
-                    value = getNext(lambda);
-                    taskDurations.add(value);
-                    sumValue += value;
+                while (System.currentTimeMillis() < startTime + experimentDurationS * 1000) {
+                    if (fakeTasks == 1) {
+                        int minutes = (int) (((System.currentTimeMillis() / 1000) / 60) % 60);
+
+                        if (mapRealLoad.get(minutes) != null && mapFakeLoad.get(minutes) != null) { //Currently both fakeload and real load change at the same time
+                            if (minuteCounter <= minutes) {
+                                if (sf != null && sfFake != null) {
+                                    sf.cancel(true);
+                                    sfFake.cancel(true);
+                                }
+
+                                double arrivalRateReal = mapRealLoad.get(minutes) * serviceRate;
+                                double arrivalRateFake = mapFakeLoad.get(minutes) * serviceRate;
+                                arrivalPeriodMillisReal = (long) (tasksPerJob / arrivalRateReal);
+                                arrivalPeriodMillisFake = (long) (tasksPerJob / arrivalRateFake);
+                                runnableFake.setFake(true);
+
+                                sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillisReal, TimeUnit.MILLISECONDS);
+                                sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillisFake, TimeUnit.MILLISECONDS);
+                                minuteCounter = minuteCounter + arrivalConfigTime;
+                            }
+                        }
+                    } else {
+                        int minutes = (int) (((System.currentTimeMillis() / 1000) / 60) % 60);
+                        if (mapRealLoad.get(minutes) != null && mapFakeLoad.get(minutes) != null) {
+                            if (minuteCounter <= minutes) {
+                                if (sf != null) {
+                                    sf.cancel(true);
+                                }
+                                load = mapRealLoad.get(minutes);
+                                double arrivalRate = load * serviceRate;
+                                arrivalPeriodMillis = (long) (tasksPerJob / arrivalRate);
+
+                                System.out.println("New Arrival Period: " + arrivalPeriodMillis);
+                                sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
+                                minuteCounter = minuteCounter + arrivalConfigTime;
+                            }
+                        }
+
+                    }
+
                 }
-                double averageTaskDurationMillis = median_task_duration;
-
-                //Get Service Rate
-                double serviceRate = W / averageTaskDurationMillis; //When taking 3500 tasks with the given seed for exponential distribution, this is the average we get for task duration
-                //Get Arrival Rate
-                double arrivalRate = load * serviceRate;
-                //Get Arrival Period for individual task
-                arrivalPeriodMillis = (long) (tasksPerJob / arrivalRate);
-
-                //Get Experiment duration based on no. of tasks (in s)
-                //Need to add more seconds to make sure all tasks get executed
-                experimentDurationS = (int) ((totalNoOfTasks) * (arrivalPeriodMillis) / (1000 * tasksPerJob));
-
-                LOG.debug("AP: " + arrivalPeriodMillis + "; AR: " + arrivalRate + "; TD: " + taskDurationMillis + "; SR: " + serviceRate +
-                        "; TOTAL TASK NUMBER: " + totalNoOfTasks + ", Extra Tasks: " + EXTRA_TASKS );
-
-                LOG.debug("Using arrival period of " + arrivalPeriodMillis +
-                        " milliseconds and running experiment for " + experimentDurationS + " seconds.");
-                //Passing workerSpeedMap as string from frontend to scheduler
-                JobLaunchRunnable runnable = new JobLaunchRunnable(tasksPerJob, taskDurations, workSpeedMap.toString());
-                taskLauncher = new ScheduledThreadPoolExecutor(1);
-                taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
             }
 
 
-            long startTime = System.currentTimeMillis();
-            LOG.debug("sleeping");
-            while (System.currentTimeMillis() < startTime + experimentDurationS * 1000) {
-                Thread.sleep(100);
-            }
-            taskLauncher.shutdown();
         } catch (Exception e) {
             LOG.error("Fatal exception", e);
         }
