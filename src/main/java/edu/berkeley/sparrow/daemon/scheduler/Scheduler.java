@@ -79,6 +79,7 @@ public class Scheduler {
     // advanced features like waiting for some probes and configurable probe ratio.
     TaskPlacer constrainedPlacer;
     TaskPlacer unconstrainedPlacer;
+    TaskPlacer randomTaskPlacer;
 
     /**
      * How many times the special case has been triggered.
@@ -148,6 +149,7 @@ public class Scheduler {
             constrainedPlacer = new ConstraintObservingProbingTaskPlacer();
             //unconstrainedPlacer = new RandomTaskPlacer();
             unconstrainedPlacer = new ProbingTaskPlacer();
+            randomTaskPlacer = new RandomTaskPlacer();
         } else {
             throw new RuntimeException("Unsupported deployment mode: " + mode);
         }
@@ -411,6 +413,7 @@ public class Scheduler {
             backendList.add(backend);
         }
         boolean constrained = isConstrained(req);
+
         /**
          * For Qiong: Since I modified the code for ProbingTaskPlacer, the no. of probes can be deterimined in that class
          * itself.. so this means there doesn't need to be acheck for perTaskSampling. Whether pOT or not is determined by
@@ -428,6 +431,12 @@ public class Scheduler {
             if (task.estimatedResources == null) {
                 task.estimatedResources = new TResourceVector(0, 1);
             }
+        }
+
+        if(req.isFake){
+            LOG.debug("Fake Tasks. So running random");
+            return randomTaskPlacer.placeTasks(app, requestId, backendList, tasks, null);
+
         }
         //Parsing everytime because workerspeed is subject to change
         workerSpeedMap = workerSpeedMap.substring(1, workerSpeedMap.length() - 1);           //remove curly brackets
