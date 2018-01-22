@@ -133,7 +133,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
         fakeLoadRatio = conf.getString(SparrowConf.FAKE_LOAD_RATIO, SparrowConf.DEFAULT_FAKE_LOAD_RATIO);
         String[] entry = fakeLoadRatio.split(":");
         if (entry.length == 2) {
-            double realLoad = Double.valueOf(entry[0].trim());
+            realLoad = Double.valueOf(entry[0].trim());
             fakeLoad = Double.valueOf(entry[1].trim());
             if (fakeLoad + realLoad >= 1) {
                 LOG.debug("Warning Load >=1");
