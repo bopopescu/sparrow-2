@@ -74,7 +74,7 @@ public class ConfigFunctions {
             workerIndexReservation = Math.abs(workerIndexReservation);
         }
         if(workerIndex.contains(workerIndexReservation)){
-            workerIndexReservation = getIndexFromPSS(cdf_worker_speed, workerIndex);
+            workerIndexReservation = getIndexHalo(cdf_worker_speed, workerIndex);
         }
         return workerIndexReservation;
     }
