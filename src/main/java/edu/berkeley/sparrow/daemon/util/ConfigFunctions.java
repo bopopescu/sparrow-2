@@ -73,9 +73,10 @@ public class ConfigFunctions {
         } else {
             workerIndexReservation = Math.abs(workerIndexReservation);
         }
-        if(workerIndex.contains(workerIndexReservation)){
-            workerIndexReservation = getIndexHalo(cdf_worker_speed, workerIndex);
-        }
+        //Not making the probe unique for now
+//        if(workerIndex.contains(workerIndexReservation)){
+//            workerIndexReservation = getIndexHalo(cdf_worker_speed, workerIndex);
+//        }
         return workerIndexReservation;
     }
 
