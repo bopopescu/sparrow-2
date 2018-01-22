@@ -84,8 +84,14 @@ public class SparrowConf {
   public final static int DEFAULT_POLICY= 1; //1 PSS+POT, 2 : PSS,  3 ; POT
 
   public final static String LEARNING = "learning";
-  public final static int DEFAULT_LEARNING= 0; //1 PSS+POT, 2 : PSS,  3 ; POT
+  public final static int DEFAULT_LEARNING= 0; //1 Learning 0 No learning
 
   public final static String SCALED = "scaled";
-  public final static int DEFAULT_SCALED= 0; //1 PSS+POT, 2 : PSS,  3 ; POT
+  public final static int DEFAULT_SCALED= 0; //0 Unscaled 1 Scaled
+
+  public final static String HALO = "halo";
+  public final static int DEFAULT_HALO= 0; //0 Unscaled 1 Scaled
+
+  public static final String FAKE_LOAD_RATIO = "fake_load_ratio";
+  public static final String DEFAULT_FAKE_LOAD_RATIO = "0.1:0.2";
 }

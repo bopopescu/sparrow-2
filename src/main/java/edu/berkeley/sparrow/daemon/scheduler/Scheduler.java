@@ -433,7 +433,7 @@ public class Scheduler {
             }
         }
 
-        if(req.isFake){
+        if(req.isFake && !constrained){
             LOG.debug("Fake Tasks. So running random");
             return randomTaskPlacer.placeTasks(app, requestId, backendList, tasks, null);
 

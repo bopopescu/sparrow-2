@@ -37,10 +37,14 @@ public class ProbingTaskPlacer implements TaskPlacer {
     private double probeRatio;
     private int policy;
     private int scaled;
-
+    private String fakeLoadRatio;
+    double realLoad;
+    double fakeLoad;
+    int isHalo;
     private ThriftClientPool<AsyncClient> clientPool;
     private RandomTaskPlacer randomPlacer;
     private final String DEFAULT_WORKER_SPEED = "1";
+
 
 
     /**
@@ -125,20 +129,41 @@ public class ProbingTaskPlacer implements TaskPlacer {
                 SparrowConf.DEFAULT_SAMPLE_RATIO);
         policy = conf.getInt(SparrowConf.POLICY, SparrowConf.DEFAULT_POLICY);
         scaled = conf.getInt(SparrowConf.SCALED, SparrowConf.DEFAULT_SCALED);
+        isHalo = conf.getInt(SparrowConf.HALO, SparrowConf.DEFAULT_HALO);
+        fakeLoadRatio = conf.getString(SparrowConf.FAKE_LOAD_RATIO, SparrowConf.DEFAULT_FAKE_LOAD_RATIO);
+        String[] entry = fakeLoadRatio.split(":");
+        if (entry.length == 2) {
+            double realLoad = Double.valueOf(entry[0].trim());
+            fakeLoad = Double.valueOf(entry[1].trim());
+            if (fakeLoad + realLoad >= 1) {
+                LOG.debug("Warning Load >=1");
+            }
+        } else {
+            LOG.debug("Warning!!! Using default Load");
+            realLoad = 0.1;
+            fakeLoad = 0.2;
+        }
+
         this.clientPool = clientPool;
         randomPlacer = new RandomTaskPlacer();
         randomPlacer.initialize(conf, clientPool);
     }
 
-    private List<InetSocketAddress> returnNodeList(int probesToLaunch, double[] cdf_worker_speed, HashMap<String, InetSocketAddress> nodeToInetMap, ArrayList<String> backendList) {
+    private List<InetSocketAddress> returnNodeList(int probesToLaunch, double[] cdf_worker_speed, HashMap<String, InetSocketAddress> nodeToInetMap, ArrayList<String> backendList, int isHalo) {
         //This was used to make sure probes aren't sent to same worker
         ArrayList<Integer> workerIndex = new ArrayList<Integer>();
         //This is supposed to be the nodelist for specified no. of probes
         List<InetSocketAddress> subNodeList = new ArrayList<InetSocketAddress>();
 
         for (int i = 0; i < probesToLaunch; i++) {
-            int workerIndexReservation = ConfigFunctions.getIndexFromPSS(cdf_worker_speed, workerIndex);
-            workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
+            if(isHalo==1){
+                //ConfigFunctions.getCDFWorkerSpeedHalo()
+                int workerIndexReservation = ConfigFunctions.getIndexHalo(cdf_worker_speed, workerIndex);
+                workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
+            } else {
+                int workerIndexReservation = ConfigFunctions.getIndexFromPSS(cdf_worker_speed, workerIndex);
+                workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
+            }
         }
 
         //After ConfigFunctions, we're getting the index of worker with higher probability
@@ -194,12 +219,15 @@ public class ProbingTaskPlacer implements TaskPlacer {
         for (InetSocketAddress node : nodeList) {
             nodeToInetMap.put(node.getAddress().getHostAddress(), node);
         }
-
         double[] cdf_worker_speed = null;
         try {
             //gets cdf of worker speed in the range of 0 to 1
             //Have to be careful about the index
-            cdf_worker_speed = ConfigFunctions.getCDFWokerSpeed(workerSpeedList);
+            if(isHalo ==1) {
+                cdf_worker_speed = ConfigFunctions.getCDFWorkerSpeedHalo(workerSpeedList,realLoad); //TODO
+            } else {
+                cdf_worker_speed = ConfigFunctions.getCDFWokerSpeed(workerSpeedList);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -207,7 +235,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
         if (policy == 1) { //PSS + POT where probes to launch determines
             if (nodes.size() > probesToLaunch) {
-                nodeList = returnNodeList(probesToLaunch, cdf_worker_speed, nodeToInetMap, backendList);
+                nodeList = returnNodeList(probesToLaunch, cdf_worker_speed, nodeToInetMap, backendList,isHalo );
             } else {
                 LOG.debug("WARNING :: No. of Probes is greater than Nodes Size. PSS not running. Only sending specified no. of probes.");
                 LOG.debug("Currently Probing all available machines");
@@ -217,7 +245,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
             }
         } else if (policy == 2) { //PSS i.e probes all the machines
             LOG.debug("Only PSS");
-            nodeList = returnNodeList(nodeList.size(), cdf_worker_speed, nodeToInetMap, backendList);
+            nodeList = returnNodeList(nodeList.size(), cdf_worker_speed, nodeToInetMap, backendList, isHalo);
         } else if (policy == 3) {
             LOG.debug("POT Without PSS");
             if (nodeList.size() > 1) {
