@@ -157,10 +157,12 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
         for (int i = 0; i < probesToLaunch; i++) {
             if(isHalo==1){
+                LOG.debug("Halo!!");
                 //ConfigFunctions.getCDFWorkerSpeedHalo()
                 int workerIndexReservation = ConfigFunctions.getIndexHalo(cdf_worker_speed, workerIndex);
                 workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
             } else {
+                LOG.debug("PSS!!");
                 int workerIndexReservation = ConfigFunctions.getIndexFromPSS(cdf_worker_speed, workerIndex);
                 workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
             }
@@ -224,8 +226,10 @@ public class ProbingTaskPlacer implements TaskPlacer {
             //gets cdf of worker speed in the range of 0 to 1
             //Have to be careful about the index
             if(isHalo ==1) {
+                LOG.debug("Halo implemented");
                 cdf_worker_speed = ConfigFunctions.getCDFWorkerSpeedHalo(workerSpeedList,realLoad); //TODO
             } else {
+                LOG.debug("Halo implemented");
                 cdf_worker_speed = ConfigFunctions.getCDFWokerSpeed(workerSpeedList);
             }
         } catch (IOException e) {
