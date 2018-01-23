@@ -35,7 +35,9 @@ public class Scheduler {
     private final static Logger LOG = Logger.getLogger(Scheduler.class);
     private final static Logger AUDIT_LOG = Logging.getAuditLogger(Scheduler.class);
 
-    /** Estimated Worker Speed HashMap **/ //TODO are we continuously updating the map???
+    /**
+     * Estimated Worker Speed HashMap
+     **/ //TODO are we continuously updating the map???
     public static HashMap<String, Double> estimatedWorkerSpeedMap = new HashMap<String, Double>();
 
     private final double DEFAULT_WORKER_SPEED = 1.0;
@@ -162,7 +164,7 @@ public class Scheduler {
 
         usePerTaskSampling = conf.getBoolean(SparrowConf.USE_PER_TASK_SAMPLING, true);
         LOG.debug("usePerTaskSampling set to " + usePerTaskSampling);
-        learning = conf.getInt(SparrowConf.LEARNING,SparrowConf.DEFAULT_LEARNING);
+        learning = conf.getInt(SparrowConf.LEARNING, SparrowConf.DEFAULT_LEARNING);
     }
 
     public boolean registerFrontend(String appId, String addr) {
@@ -206,6 +208,8 @@ public class Scheduler {
             description = req.getDescription();
         }
         boolean isFake = req.isFake;
+        LOG.debug("sunilmdhr" + ":" + requestId + ":"
+                + "scheduler_arrived" + ":" + "1" + ":" + System.currentTimeMillis());
 
         AUDIT_LOG.info(Logging.auditEventString("arrived", requestId,
                 req.getTasks().size(),
@@ -418,14 +422,14 @@ public class Scheduler {
          * For Qiong: Since I modified the code for ProbingTaskPlacer, the no. of probes can be deterimined in that class
          * itself.. so this means there doesn't need to be acheck for perTaskSampling. Whether pOT or not is determined by
          * no. of probes defined in the sample ratio. Please double check to confirm.
-                if (usePerTaskSampling && !constrained) {
-                    addRandomConstraints(req, backendList);
-                }
-                constrained = isConstrained(req);
-                if (usePerTaskSampling && !constrained) {
-                    LOG.error("Constraints didn't get properly added to request!");
-                }
-        */
+         if (usePerTaskSampling && !constrained) {
+         addRandomConstraints(req, backendList);
+         }
+         constrained = isConstrained(req);
+         if (usePerTaskSampling && !constrained) {
+         LOG.error("Constraints didn't get properly added to request!");
+         }
+         */
         // Fill in the resources in all tasks (if it's missing).
         for (TTaskSpec task : tasks) {
             if (task.estimatedResources == null) {
@@ -433,7 +437,7 @@ public class Scheduler {
             }
         }
 
-        if(req.isFake && !constrained){
+        if (req.isFake && !constrained) {
             LOG.debug("Fake Tasks. So running random");
             return randomTaskPlacer.placeTasks(app, requestId, backendList, tasks, null);
 
@@ -452,9 +456,9 @@ public class Scheduler {
         //If learning is enabled, it takes the updated hash map from sendScheduler message
         //If learning is disabled, it takes the workerSpeedHash Map from the frontend
         // It then sends it to TaskPlacer
-        if(learning == 1) { //When Learning is enabled
+        if (learning == 1) { //When Learning is enabled
             LOG.debug("Learning Enabled");
-            if(estimatedWorkerSpeedMap.isEmpty()){
+            if (estimatedWorkerSpeedMap.isEmpty()) {
                 for (InetSocketAddress node : backendList) {
                     estimatedWorkerSpeedMap.put(node.getAddress().getHostAddress(), DEFAULT_WORKER_SPEED);
                 }
@@ -470,14 +474,14 @@ public class Scheduler {
         } else {
             LOG.debug("Learning Disabled");
 
-            if(workerSpeedHashMap.isEmpty()){
+            if (workerSpeedHashMap.isEmpty()) {
                 LOG.debug("Warning Default Everything to 1");
                 for (InetSocketAddress node : backendList) {
                     workerSpeedHashMap.put(node.getAddress().getHostAddress(), DEFAULT_WORKER_SPEED);
                 }
             } else {
                 for (InetSocketAddress node : backendList) {
-                    if(workerSpeedHashMap.get(node.getAddress().getHostAddress())!=null) {
+                    if (workerSpeedHashMap.get(node.getAddress().getHostAddress()) != null) {
                         workerSpeedHashMap.put(node.getAddress().getHostAddress(), workerSpeedHashMap.get(node.getAddress().getHostAddress()));
                     } else {
                         LOG.debug("WARNING!!! Could not fetch the worker Speed. Defaulting to 1");
@@ -587,15 +591,13 @@ public class Scheduler {
                                      int status, ByteBuffer message, String hostAddress) { //TODO Find the faster way to pass things
         LOG.debug(Logging.functionCall(app, taskId, message));
         double workerSpeed = message.getDouble();
-        AUDIT_LOG.info(Logging.auditEventString("update_worker_speed", taskId.requestId,
-                workerSpeed,
-                taskId.taskId,
-                hostAddress,
-                frontendSockets.get(app).getAddress().getHostAddress(),
-                status));
         LOG.debug("THIS IS SCHEDULER where WS:--> " + workerSpeed + "Host Address: " + hostAddress);
         estimatedWorkerSpeedMap.put(hostAddress, workerSpeed);
         LOG.debug("THIS IS SCHEDULER where Map--> " + estimatedWorkerSpeedMap);
+        LOG.debug("sunilmdhr" + ":" + taskId.requestId + ":"
+                + "scheduler_estimated_workerspeed" + ":" + workerSpeed + ":" + System.currentTimeMillis() + ":" + hostAddress);
+
+
         InetSocketAddress frontend = frontendSockets.get(app);
         if (frontend == null) {
             LOG.error("Requested message sent to unregistered app: " + app);

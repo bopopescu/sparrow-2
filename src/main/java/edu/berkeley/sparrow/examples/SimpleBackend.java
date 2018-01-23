@@ -200,8 +200,7 @@ public class SimpleBackend implements BackendService.Iface {
                 long sleepTime = (long) ((Double.valueOf(taskDuration) / Double.valueOf(hostWorkSpeed)));
 
                 Thread.sleep(sleepTime);
-
-                LOG.debug("WS: " + hostWorkSpeed + "ms" + ";  Host: " + thisHost + "; sleepTime: " + sleepTime + "; taskDuration " + taskDuration);
+                            LOG.debug("WS: " + hostWorkSpeed + "ms" + ";  Host: " + thisHost + "; sleepTime: " + sleepTime + "; taskDuration " + taskDuration);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -213,6 +212,9 @@ public class SimpleBackend implements BackendService.Iface {
 
 //          LOG.debug("Aggregate task rate: " + taskRate);
 
+            LOG.debug("sunilmdhr" + ":" + taskId.requestId + ":"
+                    + "backend_workerspeed" + ":" + hostWorkSpeed + ":" + System.currentTimeMillis() + ":" + thisHost);
+
             long completionTime = System.currentTimeMillis() - startTime;
             if(!isFake) {
                 LOG.debug("Actual task in " + (taskDuration) + "ms");
@@ -220,14 +222,25 @@ public class SimpleBackend implements BackendService.Iface {
                 LOG.debug("ResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
                 LOG.debug("WaitingTime in " + (startTime - taskStartTime) + "ms");
                 LOG.debug("CurrentTime in " + System.currentTimeMillis());
+
+
+                LOG.debug("sunilmdhr" + ":" + taskId.requestId + ":"
+                        + "backend_responseTime" + ":" + (System.currentTimeMillis() - taskStartTime) + ":" + System.currentTimeMillis() + ":" + thisHost);
+
+
             } else {
                 LOG.debug("FakeActual task in " + (taskDuration) + "ms");
                 LOG.debug("FakeTask completed in " + completionTime + "ms");
                 LOG.debug("FakeResponseTime in " + (System.currentTimeMillis() - taskStartTime) + "ms");
                 LOG.debug("FakeWaitingTime in " + (startTime - taskStartTime) + "ms");
                 LOG.debug("FakeCurrentTime in " + System.currentTimeMillis());
+
+                LOG.debug("sunilmdhr" + ":" + taskId.requestId + ":"
+                        + "backend_fakeResponseTime" + ":" + (System.currentTimeMillis() - taskStartTime) + ":" + System.currentTimeMillis() + ":" + thisHost);
             }
             LOG.debug("TaskId in " + taskId.toString());
+
+
 
             //Adds the current completion time
             ma.add(completionTime);

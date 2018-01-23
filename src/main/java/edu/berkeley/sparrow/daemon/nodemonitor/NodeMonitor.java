@@ -169,6 +169,13 @@ public class NodeMonitor {
                     "Can't launch task.");
             return false;
         }
+        int queueLength = scheduler.getResourceUsage(taskId.appId).queueLength;
+        int fakeQueueLength = scheduler.getResourceUsage(taskId.appId).fakeQueueLength;
+        LOG.debug("sunilmdhr" + ":" + taskId.requestId + ":"
+                + "nodemonitor_queuelength"  + ":"+ queueLength + ":" + System.currentTimeMillis());
+        LOG.debug("sunilmdhr" + ":" + taskId.requestId + ":"
+                + "nodemonitor_fakeQueuelength"  + ":"+ fakeQueueLength + ":" + System.currentTimeMillis());
+
         scheduler.submitTask(scheduler.new TaskDescription(taskId, message,
                 estimatedResources, user, socket, isFake), taskId.appId, isFake);
         return true;

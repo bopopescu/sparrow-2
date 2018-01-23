@@ -201,6 +201,9 @@ public class SimpleFrontend implements FrontendService.Iface {
                     tasks.add(spec);
                 }
                 long start = System.currentTimeMillis();
+                LOG.debug("sunilmdhr" + ":" + "0" + ":"
+                        + "frontend_job_submitted" + ":" + "1" + ":" + System.currentTimeMillis());
+                
                 try {
                     client.submitJob(APPLICATION_ID, tasks, USER, workSpeedMap, isFake);
                 } catch (TException e) {
@@ -406,7 +409,7 @@ public class SimpleFrontend implements FrontendService.Iface {
                 taskLauncher.shutdown();
 
             } else {
-                experimentDurationS = 11*60; //RUnning for 11 minutes
+                experimentDurationS = 11 * 60; //RUnning for 11 minutes
                 LOG.debug(realLoads + "<------");
                 if (realLoads.equalsIgnoreCase("") || fakeLoads.equalsIgnoreCase("")) {
                     LOG.debug("Warning!!! Empty alteration");
@@ -461,7 +464,7 @@ public class SimpleFrontend implements FrontendService.Iface {
 
                                 sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillisReal, TimeUnit.MILLISECONDS);
                                 sfFake = taskLauncher.scheduleAtFixedRate(runnableFake, 0, arrivalPeriodMillisFake, TimeUnit.MILLISECONDS);
-                                minuteCounter = minuteCounter + (int)arrivalConfigTime/60;
+                                minuteCounter = minuteCounter + (int) arrivalConfigTime / 60;
                             }
                         }
                     } else {
@@ -477,7 +480,7 @@ public class SimpleFrontend implements FrontendService.Iface {
 
                                 LOG.debug("New Arrival Period------------> " + arrivalPeriodMillis);
                                 sf = taskLauncher.scheduleAtFixedRate(runnable, 0, arrivalPeriodMillis, TimeUnit.MILLISECONDS);
-                                minuteCounter = minuteCounter + (int)arrivalConfigTime/60;
+                                minuteCounter = minuteCounter + (int) arrivalConfigTime / 60;
                             }
                         }
 
