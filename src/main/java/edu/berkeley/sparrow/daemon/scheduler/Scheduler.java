@@ -587,6 +587,12 @@ public class Scheduler {
                                      int status, ByteBuffer message, String hostAddress) { //TODO Find the faster way to pass things
         LOG.debug(Logging.functionCall(app, taskId, message));
         double workerSpeed = message.getDouble();
+        AUDIT_LOG.info(Logging.auditEventString("update_worker_speed", taskId.requestId,
+                workerSpeed,
+                taskId.taskId,
+                hostAddress,
+                frontendSockets.get(app).getAddress().getHostAddress(),
+                status));
         LOG.debug("THIS IS SCHEDULER where WS:--> " + workerSpeed + "Host Address: " + hostAddress);
         estimatedWorkerSpeedMap.put(hostAddress, workerSpeed);
         LOG.debug("THIS IS SCHEDULER where Map--> " + estimatedWorkerSpeedMap);
