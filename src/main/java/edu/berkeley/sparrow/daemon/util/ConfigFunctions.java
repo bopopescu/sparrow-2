@@ -17,9 +17,9 @@ public class ConfigFunctions {
             workerIndexReservation = Math.abs(workerIndexReservation);
         }
         //This doesn't allow probing the same nodemonitor twice
-        if(workerIndex.contains(workerIndexReservation)){
-            workerIndexReservation = getIndexFromPSS(cdf_worker_speed, workerIndex);
-        }
+//        if(workerIndex.contains(workerIndexReservation)){
+//            workerIndexReservation = getIndexFromPSS(cdf_worker_speed, workerIndex);
+//        }
         return workerIndexReservation;
     }
 

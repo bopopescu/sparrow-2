@@ -251,7 +251,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
             }
         } else if (policy == 2) { //PSS i.e probes all the machines
             LOG.debug("Only PSS");
-            nodeList = returnNodeList(nodeList.size(), cdf_worker_speed, nodeToInetMap, backendList, isHalo);
+            nodeList = returnNodeList(1, cdf_worker_speed, nodeToInetMap, backendList, isHalo);
         } else if (policy == 3) {
             LOG.debug("POT Without PSS");
             if (nodeList.size() > 1) {
