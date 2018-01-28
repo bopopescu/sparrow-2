@@ -163,7 +163,7 @@ public class Scheduler {
                 SparrowConf.DEFAULT_SPREAD_EVENLY_TASK_SET_SIZE);
 
         usePerTaskSampling = conf.getBoolean(SparrowConf.USE_PER_TASK_SAMPLING, true);
-        LOG.debug("usePerTaskSampling set to " + usePerTaskSampling);
+        //LOG.debug("usePerTaskSampling set to " + usePerTaskSampling);
         learning = conf.getInt(SparrowConf.LEARNING, SparrowConf.DEFAULT_LEARNING);
     }
 
@@ -589,11 +589,11 @@ public class Scheduler {
 
     public void sendSchedulerMessage(String app, TFullTaskId taskId,
                                      int status, ByteBuffer message, String hostAddress) { //TODO Find the faster way to pass things
-        LOG.debug(Logging.functionCall(app, taskId, message));
+        //LOG.debug(Logging.functionCall(app, taskId, message));
         double workerSpeed = message.getDouble();
-        LOG.debug("THIS IS SCHEDULER where WS:--> " + workerSpeed + "Host Address: " + hostAddress);
+        //LOG.debug("THIS IS SCHEDULER where WS:--> " + workerSpeed + "Host Address: " + hostAddress);
         estimatedWorkerSpeedMap.put(hostAddress, workerSpeed);
-        LOG.debug("THIS IS SCHEDULER where Map--> " + estimatedWorkerSpeedMap);
+        //LOG.debug("THIS IS SCHEDULER where Map--> " + estimatedWorkerSpeedMap);
         LOG.debug("sunilmdhr" + ":" + taskId.requestId + ":"
                 + "scheduler_estimated_workerspeed" + ":" + workerSpeed + ":" + System.currentTimeMillis() + ":" + hostAddress);
 

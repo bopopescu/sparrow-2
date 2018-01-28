@@ -94,4 +94,7 @@ public class SparrowConf {
 
   public static final String FAKE_LOAD_RATIO = "fake_load_ratio";
   public static final String DEFAULT_FAKE_LOAD_RATIO = "0.1:0.2";
+
+  public static final String MULTIARM = "multiarm";
+  public static final double DEFAULT_MULTIARM= 0.5;
 }

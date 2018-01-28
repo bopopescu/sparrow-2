@@ -44,7 +44,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
     private ThriftClientPool<AsyncClient> clientPool;
     private RandomTaskPlacer randomPlacer;
     private final String DEFAULT_WORKER_SPEED = "1";
-
+    double multiArm;
 
 
     /**
@@ -133,6 +133,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
         scaled = conf.getInt(SparrowConf.SCALED, SparrowConf.DEFAULT_SCALED);
         isHalo = conf.getInt(SparrowConf.HALO, SparrowConf.DEFAULT_HALO);
         fakeLoadRatio = conf.getString(SparrowConf.FAKE_LOAD_RATIO, SparrowConf.DEFAULT_FAKE_LOAD_RATIO);
+        multiArm = conf.getDouble(SparrowConf.MULTIARM, SparrowConf.DEFAULT_MULTIARM);
         String[] entry = fakeLoadRatio.split(":");
         if (entry.length == 2) {
             realLoad = Double.valueOf(entry[0].trim());
@@ -158,13 +159,12 @@ public class ProbingTaskPlacer implements TaskPlacer {
         List<InetSocketAddress> subNodeList = new ArrayList<InetSocketAddress>();
 
         for (int i = 0; i < probesToLaunch; i++) {
-            if(isHalo==1){
+            if (isHalo == 1) {
                 LOG.debug("Halo!!");
                 //ConfigFunctions.getCDFWorkerSpeedHalo()
                 int workerIndexReservation = ConfigFunctions.getIndexHalo(cdf_worker_speed, workerIndex);
                 workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
             } else {
-                LOG.debug("PSS!!");
                 int workerIndexReservation = ConfigFunctions.getIndexFromPSS(cdf_worker_speed, workerIndex);
                 workerIndex.add(workerIndexReservation); //Chosen workers based on proportional sampling
             }
@@ -185,7 +185,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
                                                                    String requestId, Collection<InetSocketAddress> nodes,
                                                                    Collection<TTaskSpec> tasks, HashMap<String, Double> workerSpeedMap)
             throws IOException {
-        LOG.debug(Logging.functionCall(appId, nodes, tasks));
+//        LOG.debug(Logging.functionCall(appId, nodes, tasks));
 
         if (probeRatio < 1.0) {
             LOG.debug("Random Enabled");
@@ -200,7 +200,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
         //TODO This assumes that we have more workers than probes
         int probesToLaunch = (int) Math.ceil(probeRatio * tasks.size());
 
-        LOG.debug("Launching " + probesToLaunch + " probes");
+
 
         // Right now we wait for all probes to return, in the future we might add a timeout
         CountDownLatch latch = new CountDownLatch(probesToLaunch);
@@ -227,11 +227,9 @@ public class ProbingTaskPlacer implements TaskPlacer {
         try {
             //gets cdf of worker speed in the range of 0 to 1
             //Have to be careful about the index
-            if(isHalo ==1) {
-                LOG.debug("Halo implemented");
-                cdf_worker_speed = ConfigFunctions.getCDFWorkerSpeedHalo(workerSpeedList,realLoad); //TODO
+            if (isHalo == 1) {
+                cdf_worker_speed = ConfigFunctions.getCDFWorkerSpeedHalo(workerSpeedList, realLoad); //TODO
             } else {
-                LOG.debug("Halo implemented");
                 cdf_worker_speed = ConfigFunctions.getCDFWokerSpeed(workerSpeedList);
             }
         } catch (IOException e) {
@@ -241,7 +239,8 @@ public class ProbingTaskPlacer implements TaskPlacer {
 
         if (policy == 1) { //PSS + POT where probes to launch determines
             if (nodes.size() > probesToLaunch) {
-                nodeList = returnNodeList(probesToLaunch, cdf_worker_speed, nodeToInetMap, backendList,isHalo );
+                LOG.debug("Launching " + probesToLaunch + " probes");
+                nodeList = returnNodeList(probesToLaunch, cdf_worker_speed, nodeToInetMap, backendList, isHalo);
             } else {
                 LOG.debug("WARNING :: No. of Probes is greater than Nodes Size. PSS not running. Only sending specified no. of probes.");
                 LOG.debug("Currently Probing all available machines");
@@ -258,6 +257,31 @@ public class ProbingTaskPlacer implements TaskPlacer {
                 Collections.shuffle(nodeList);
                 nodeList = nodeList.subList(0, 2); //Hardcode 2 from Power of Two here
             }
+        } else if (policy == 4) {
+            double armSeed = Math.random();
+            if (armSeed < multiArm) { //With Probability Delta Random is chosen
+                LOG.debug("Arm goto Random");
+                if (nodeList.size() > 1) {
+                    return randomPlacer.placeTasks(appId, requestId, nodes, tasks, workerSpeedMap);
+             //       Collections.shuffle(nodeList);
+               //     nodeList = nodeList.subList(0, 1); //uniform
+                }
+            } else {  //With Probability 1-Delta PSS+POT is chosen
+                LOG.debug("Arm goto PSS+POT");
+                if (nodes.size() > probesToLaunch) {
+                    LOG.debug("Real PSS+POT");
+                    nodeList = returnNodeList(probesToLaunch, cdf_worker_speed, nodeToInetMap, backendList, isHalo);
+                } else {
+                    LOG.debug("Arm WARNING :: No. of Probes is greater than Nodes Size. PSS not running. Only sending specified no. of probes.");
+                    LOG.debug("Currently Probing all available machines");
+                    // Get a random subset of nodes by shuffling list . This can be used if we're not using pss
+                    //This shouldn't be used but is here just in case
+                    Collections.shuffle(nodeList);
+                    nodeList = nodeList.subList(0, nodeList.size());
+                }
+
+            }
+
         }
 
         ArrayList<Double> chosenWorkerSpeedsByPSS = new ArrayList<Double>();
@@ -311,12 +335,12 @@ public class ProbingTaskPlacer implements TaskPlacer {
         }
         Collection<TaskPlacementResponse> out;
         if (scaled == 1) {
-            LOG.debug("Sunil Running Scaled version");
+            LOG.debug("Running Scaled version");
             AssignmentPolicy assigner = new ComparatorAssignmentPolicy(
                     new TResources.ScaledQueueComparator());
             out = assigner.assignTasks(tasks, loads);
         } else {
-            LOG.debug("Sunil Running UnScaled version");
+            LOG.debug("Running UnScaled version");
             AssignmentPolicy assigner = new ComparatorAssignmentPolicy(
                     new TResources.MinQueueComparator());
             out = assigner.assignTasks(tasks, loads);
