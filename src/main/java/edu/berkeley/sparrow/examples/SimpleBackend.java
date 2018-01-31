@@ -203,6 +203,7 @@ public class SimpleBackend implements BackendService.Iface {
                             LOG.debug("WS: " + hostWorkSpeed + "ms" + ";  Host: " + thisHost + "; sleepTime: " + sleepTime + "; taskDuration " + taskDuration);
 
             } catch (InterruptedException e) {
+                LOG.debug("CONCURRENTLOG: 1 " + e.toString());
                 e.printStackTrace();
             }
 
@@ -256,11 +257,12 @@ public class SimpleBackend implements BackendService.Iface {
                 message.putDouble(estimatedWorkerSpeed);
                 client.sendSchedulerMessage(taskId.appId, taskId, 0, ByteBuffer.wrap(message.array()), thisHost);
             } catch (TException e) {
+                LOG.debug("CONCURRENTLOG: 2 " + e.toString());
                 e.printStackTrace();
             }
 
-            client.getInputProtocol().getTransport().close();
-            client.getOutputProtocol().getTransport().close();
+//            client.getInputProtocol().getTransport().close();
+  //          client.getOutputProtocol().getTransport().close();
         }
     }
 
@@ -284,7 +286,7 @@ public class SimpleBackend implements BackendService.Iface {
             LOG.debug("Error while registering backend: " + e.getMessage());
         }
 
-        new Thread(new TasksFinishedRpcRunnable()).start();
+        //new Thread(new TasksFinishedRpcRunnable()).start();
     }
 
     @Override
