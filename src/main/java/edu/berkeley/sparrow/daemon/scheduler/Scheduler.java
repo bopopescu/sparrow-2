@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -38,7 +39,7 @@ public class Scheduler {
     /**
      * Estimated Worker Speed HashMap
      **/ //TODO are we continuously updating the map???
-    public static HashMap<String, Double> estimatedWorkerSpeedMap = new HashMap<String, Double>();
+    public static ConcurrentHashMap<String, Double> estimatedWorkerSpeedMap = new ConcurrentHashMap<String, Double>();
 
     private final double DEFAULT_WORKER_SPEED = 1.0;
 
@@ -445,7 +446,7 @@ public class Scheduler {
         //Parsing everytime because workerspeed is subject to change
         workerSpeedMap = workerSpeedMap.substring(1, workerSpeedMap.length() - 1);           //remove curly brackets
         String[] keyValuePairs = workerSpeedMap.split(",");              //split the string to create key-value pairs
-        HashMap<String, Double> workerSpeedHashMap = new HashMap<String, Double>();
+        ConcurrentHashMap<String, Double> workerSpeedHashMap = new ConcurrentHashMap<String, Double>();
 
         for (String pair : keyValuePairs)                        //iterate over the pairs
         {

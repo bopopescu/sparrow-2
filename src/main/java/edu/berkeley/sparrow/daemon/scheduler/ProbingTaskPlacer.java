@@ -3,6 +3,7 @@ package edu.berkeley.sparrow.daemon.scheduler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -183,7 +184,7 @@ public class ProbingTaskPlacer implements TaskPlacer {
     @Override
     public Collection<TaskPlacer.TaskPlacementResponse> placeTasks(String appId,
                                                                    String requestId, Collection<InetSocketAddress> nodes,
-                                                                   Collection<TTaskSpec> tasks, HashMap<String, Double> workerSpeedMap)
+                                                                   Collection<TTaskSpec> tasks, ConcurrentHashMap<String, Double> workerSpeedMap)
             throws IOException {
 //        LOG.debug(Logging.functionCall(appId, nodes, tasks));
 

@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.configuration.Configuration;
 
@@ -25,7 +26,7 @@ public class RandomTaskPlacer implements TaskPlacer {
   private RandomAssignmentPolicy policy = new RandomAssignmentPolicy();
   @Override
   public Collection<TaskPlacementResponse> placeTasks(String appId,
-      String requestId, Collection<InetSocketAddress> nodes, Collection<TTaskSpec> tasks, HashMap<String, Double> workerSpeedMap)
+      String requestId, Collection<InetSocketAddress> nodes, Collection<TTaskSpec> tasks, ConcurrentHashMap<String, Double> workerSpeedMap)
           throws IOException {
     Map<InetSocketAddress, TResourceUsage> nodeUsage = Maps.newHashMap();
     for (InetSocketAddress socket : nodes) {

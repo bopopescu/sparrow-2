@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -55,7 +56,7 @@ public class  ConstraintObservingProbingTaskPlacer extends ProbingTaskPlacer {
   @Override
   public Collection<TaskPlacementResponse> placeTasks(String appId,
       String requestId, Collection<InetSocketAddress> nodes,
-      Collection<TTaskSpec> tasks, HashMap<String, Double> workerSpeedHashMap) throws IOException {
+      Collection<TTaskSpec> tasks, ConcurrentHashMap<String, Double> workerSpeedHashMap) throws IOException {
     LOG.debug("Placing constrained tasks with probe ratio: " + probesPerTask);
 
     // This approximates a "randomized over constraints" approach if we get a trivial
